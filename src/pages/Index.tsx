@@ -57,7 +57,7 @@ const Index = () => {
       <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center text-gray-800">Chicken Farm Financial Tracker</h1>
         
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-4 mb-8">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3 mb-8">
           <TransactionSummary transactions={transactions} />
         </div>
         

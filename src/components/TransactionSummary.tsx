@@ -1,6 +1,5 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Apple, Pill, Wrench, Construction, Package, DollarSign, ArrowUp, ArrowDown } from "lucide-react";
+import { DollarSign, TrendingUp, Package, ArrowUp, ArrowDown } from "lucide-react";
 import { Transaction } from "@/pages/Index";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -38,57 +37,50 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Total Profit</CardTitle>
-          {profit >= 0 ? 
-            <ArrowUp className="h-4 w-4 text-green-500" /> : 
-            <ArrowDown className="h-4 w-4 text-red-500" />
-          }
+      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
+          <CardTitle className="text-sm sm:text-base font-medium">Total Profit</CardTitle>
+          <div className="bg-gray-100 p-2 rounded-full">
+            {profit >= 0 ? 
+              <ArrowUp className="h-5 w-5 text-green-500" /> : 
+              <ArrowDown className="h-5 w-5 text-red-500" />
+            }
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className={`text-lg sm:text-2xl font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        <CardContent className="pt-4">
+          <div className={`text-xl sm:text-3xl font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {formatCurrency(profit)}
           </div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">Income minus expenses</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Income minus expenses</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Total Income</CardTitle>
-          <DollarSign className="h-4 w-4 text-green-500" />
+      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
+          <CardTitle className="text-sm sm:text-base font-medium">Total Income</CardTitle>
+          <div className="bg-green-50 p-2 rounded-full">
+            <DollarSign className="h-5 w-5 text-green-500" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-lg sm:text-2xl font-bold">{formatCurrency(totalIncome)}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
+        <CardContent className="pt-4">
+          <div className="text-xl sm:text-3xl font-bold text-green-500">{formatCurrency(totalIncome)}</div>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             All sales and income
           </p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Total Expenses</CardTitle>
-          <Package className="h-4 w-4 text-red-500" />
+      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
+          <CardTitle className="text-sm sm:text-base font-medium">Total Expenses</CardTitle>
+          <div className="bg-red-50 p-2 rounded-full">
+            <Package className="h-5 w-5 text-red-500" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-lg sm:text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
+        <CardContent className="pt-4">
+          <div className="text-xl sm:text-3xl font-bold text-red-500">{formatCurrency(totalExpenses)}</div>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             All expenses
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs sm:text-sm font-medium">Chicken Count</CardTitle>
-          <Package className="h-4 w-4 text-purple-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-lg sm:text-2xl font-bold">{chickensPurchased - chickensSold}</div>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
-            {chickensPurchased} purchased, {chickensSold} sold
           </p>
         </CardContent>
       </Card>
