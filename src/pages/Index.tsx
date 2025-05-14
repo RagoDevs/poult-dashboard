@@ -9,6 +9,7 @@ import { ExpenseSummary } from "@/components/ExpenseSummary";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionSummary } from "@/components/TransactionSummary";
+import { ChickenInventory } from "@/components/ChickenInventory";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'fence' | 'chicken' | 'other';
@@ -58,6 +59,10 @@ const Index = () => {
         
         <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-4 mb-8">
           <TransactionSummary transactions={transactions} />
+        </div>
+        
+        <div className="mb-8">
+          <ChickenInventory />
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
