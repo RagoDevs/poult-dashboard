@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bird, Baby, Plus, Minus, Save } from "lucide-react";
+import { Bird, Baby, Plus, Minus, Save, ShoppingCart, DollarSign } from "lucide-react";
 
 export function ChickenInventory() {
   // Initialize counts from localStorage or default to 0
@@ -32,10 +32,12 @@ export function ChickenInventory() {
   };
 
   const decrement = (type: 'hen' | 'cock' | 'baby') => {
-    setCounts(prev => ({
-      ...prev,
-      [type]: Math.max(0, prev[type] - 1) // Prevent negative counts
-    }));
+    if (counts[type] > 0) {
+      setCounts(prev => ({
+        ...prev,
+        [type]: Math.max(0, prev[type] - 1) // Prevent negative counts
+      }));
+    }
   };
 
   const handleInputChange = (type: 'hen' | 'cock' | 'baby', value: string) => {
@@ -54,6 +56,19 @@ export function ChickenInventory() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {/* Chicken Count Card */}
+          <div className="flex flex-col items-center p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-lg font-bold text-blue-600">Chicken Count</span>
+            </div>
+            <div className="text-3xl font-bold mb-2">{totalCount}</div>
+            <div className="flex flex-col items-center text-sm text-gray-600 space-y-1">
+              <div className="text-center mt-2">
+                <span>Total chickens in your farm</span>
+              </div>
+            </div>
+          </div>
+          
           {/* Hens */}
           <div className="flex flex-col items-center p-4 bg-amber-50 rounded-lg">
             <Bird className="h-8 w-8 text-amber-500 mb-2" />
@@ -145,15 +160,6 @@ export function ChickenInventory() {
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-          
-          {/* Total */}
-          <div className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg">
-            <div className="flex justify-center mb-2">
-              <span className="text-blue-500 font-bold text-lg">Σ</span>
-            </div>
-            <span className="text-sm font-medium mb-2">Total</span>
-            <span className="text-2xl font-bold">{totalCount}</span>
           </div>
         </div>
       </CardContent>
