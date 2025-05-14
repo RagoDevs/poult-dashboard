@@ -4,6 +4,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/pages/Index";
 import { Apple, Pill, Wrench, Construction, Package, DollarSign } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -12,6 +13,7 @@ interface TransactionListProps {
 
 export function TransactionList({ transactions, type }: TransactionListProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const isMobile = useIsMobile();
   
   const getCategoryIcon = (category: string, type: TransactionType) => {
     if (type === 'income') {
@@ -38,7 +40,7 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
     const date = new Date(dateStr);
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
-      month: 'short',
+      month: isMobile ? 'numeric' : 'short',
       day: 'numeric'
     }).format(date);
   };
@@ -46,7 +48,8 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
+      notation: isMobile ? 'compact' : 'standard'
     }).format(amount);
   };
 
@@ -65,7 +68,7 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
             <TabsTrigger 
               key={category} 
               value={category} 
-              className="capitalize flex-1"
+              className="capitalize flex-1 text-xs sm:text-sm"
             >
               {category}
             </TabsTrigger>
@@ -80,33 +83,37 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
             : `No ${type} in the '${categoryFilter}' category.`}
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Category</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              {type === 'income' && <TableHead>Quantity</TableHead>}
-              <TableHead className="text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTransactions.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell className="flex items-center gap-2">
-                  {getCategoryIcon(transaction.category, transaction.type)}
-                  <span className="capitalize">{transaction.category}</span>
-                </TableCell>
-                <TableCell>{formatDate(transaction.date)}</TableCell>
-                <TableCell>{transaction.description}</TableCell>
-                {type === 'income' && (
-                  <TableCell>{transaction.quantity ?? '-'}</TableCell>
-                )}
-                <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
+        <div className="w-full overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap">Category</TableHead>
+                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead className="whitespace-nowrap">Description</TableHead>
+                {type === 'income' && <TableHead className="whitespace-nowrap">Quantity</TableHead>}
+                <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredTransactions.map((transaction) => (
+                <TableRow key={transaction.id}>
+                  <TableCell className="flex items-center gap-2 whitespace-nowrap">
+                    {getCategoryIcon(transaction.category, transaction.type)}
+                    <span className="capitalize">{transaction.category}</span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">{formatDate(transaction.date)}</TableCell>
+                  <TableCell className="max-w-[150px] sm:max-w-[250px] truncate">
+                    {transaction.description}
+                  </TableCell>
+                  {type === 'income' && (
+                    <TableCell className="whitespace-nowrap">{transaction.quantity ?? '-'}</TableCell>
+                  )}
+                  <TableCell className="text-right whitespace-nowrap">{formatCurrency(transaction.amount)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
