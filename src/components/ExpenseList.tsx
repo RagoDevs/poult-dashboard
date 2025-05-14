@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Expense, ExpenseCategory } from "@/pages/Index";
-import { Feed, Medicine, Tools, Fence, Package } from "lucide-react";
+import { Apple, Pill, Wrench, Construction, Package } from "lucide-react";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -15,13 +15,13 @@ export function ExpenseList({ expenses }: ExpenseListProps) {
   const getCategoryIcon = (category: ExpenseCategory) => {
     switch (category) {
       case 'food':
-        return <Feed className="text-green-500" />;
+        return <Apple className="text-green-500" />;
       case 'medicine':
-        return <Medicine className="text-blue-500" />;
+        return <Pill className="text-blue-500" />;
       case 'tools':
-        return <Tools className="text-orange-500" />;
+        return <Wrench className="text-orange-500" />;
       case 'fence':
-        return <Fence className="text-brown-500" />;
+        return <Construction className="text-brown-500" />;
       default:
         return <Package className="text-gray-500" />;
     }

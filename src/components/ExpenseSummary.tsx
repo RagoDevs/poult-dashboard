@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Feed, Medicine, Tools, Fence } from "lucide-react";
+import { Apple, Pill, Wrench, Construction, Package } from "lucide-react";
 import { Expense } from "@/pages/Index";
 
 interface ExpenseSummaryProps {
@@ -43,7 +43,7 @@ export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Food</CardTitle>
-          <Feed className="h-4 w-4 text-green-500" />
+          <Apple className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(foodTotal)}</div>
@@ -56,7 +56,7 @@ export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Medicine</CardTitle>
-          <Medicine className="h-4 w-4 text-blue-500" />
+          <Pill className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(medicineTotal)}</div>
@@ -69,7 +69,7 @@ export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Equipment</CardTitle>
-          <Tools className="h-4 w-4 text-orange-500" />
+          <Wrench className="h-4 w-4 text-orange-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(toolsTotal + fenceTotal)}</div>
@@ -81,6 +81,3 @@ export function ExpenseSummary({ expenses }: ExpenseSummaryProps) {
     </>
   );
 }
-
-// Need to import this
-import { Package } from "lucide-react";
