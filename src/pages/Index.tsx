@@ -30,6 +30,7 @@ export interface Transaction {
   date: string;
   description: string;
   quantity?: number;
+  chickenType?: 'hen' | 'cock' | 'baby';
 }
 
 const Index = () => {

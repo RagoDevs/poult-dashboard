@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ExpenseCategory, TransactionType } from "@/pages/Index";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TransactionFormProps {
   onSubmit: (transaction: {
@@ -15,6 +16,7 @@ interface TransactionFormProps {
     date: string;
     description: string;
     quantity?: number;
+    chickenType?: 'hen' | 'cock' | 'baby';
   }) => void;
   onCancel: () => void;
   type: TransactionType;
@@ -26,6 +28,7 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [chickenType, setChickenType] = useState<'hen' | 'cock' | 'baby' | undefined>(undefined);
   const isMobile = useIsMobile();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -37,6 +40,7 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
       date,
       description,
       quantity: quantity ? parseInt(quantity) : undefined,
+      chickenType: category === 'chicken' ? chickenType : undefined,
     });
   };
 
@@ -110,6 +114,22 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
           </div>
         )}
       </div>
+      
+      {category === 'chicken' && (
+        <div className="space-y-2">
+          <Label htmlFor="chickenType">Chicken Type</Label>
+          <Select value={chickenType} onValueChange={(value: 'hen' | 'cock' | 'baby') => setChickenType(value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select chicken type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hen">Hen (Mother)</SelectItem>
+              <SelectItem value="cock">Cock (Father)</SelectItem>
+              <SelectItem value="baby">Children</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>

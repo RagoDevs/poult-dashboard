@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/pages/Index";
-import { Apple, Pill, Wrench, Construction, Package, DollarSign } from "lucide-react";
+import { Apple, Pill, Wrench, Construction, Package, DollarSign, Bird, Baby } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionListProps {
@@ -15,7 +15,14 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const isMobile = useIsMobile();
   
-  const getCategoryIcon = (category: string, type: TransactionType) => {
+  const getCategoryIcon = (category: string, type: TransactionType, chickenType?: string) => {
+    if (category === 'chicken') {
+      if (chickenType === 'hen') return <Bird className="text-amber-500" />;
+      if (chickenType === 'cock') return <Bird className="text-red-500" />;
+      if (chickenType === 'baby') return <Baby className="text-purple-500" />;
+      return <Package className="text-purple-500" />;
+    }
+    
     if (type === 'income') {
       return <DollarSign className="text-green-500" />;
     }
@@ -29,8 +36,6 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
         return <Wrench className="text-orange-500" />;
       case 'fence':
         return <Construction className="text-brown-500" />;
-      case 'chicken':
-        return <Package className="text-purple-500" />;
       default:
         return <Package className="text-gray-500" />;
     }
@@ -51,6 +56,16 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
       currency: 'USD',
       notation: isMobile ? 'compact' : 'standard'
     }).format(amount);
+  };
+
+  const getChickenTypeDisplay = (chickenType?: string) => {
+    if (!chickenType) return '';
+    switch (chickenType) {
+      case 'hen': return ' (Hen)';
+      case 'cock': return ' (Cock)';
+      case 'baby': return ' (Children)';
+      default: return '';
+    }
   };
 
   // Get unique categories from transactions
@@ -98,8 +113,10 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
               {filteredTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell className="flex items-center gap-2 whitespace-nowrap">
-                    {getCategoryIcon(transaction.category, transaction.type)}
-                    <span className="capitalize">{transaction.category}</span>
+                    {getCategoryIcon(transaction.category, transaction.type, transaction.chickenType)}
+                    <span className="capitalize">
+                      {transaction.category}{getChickenTypeDisplay(transaction.chickenType)}
+                    </span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{formatDate(transaction.date)}</TableCell>
                   <TableCell className="max-w-[150px] sm:max-w-[250px] truncate">
