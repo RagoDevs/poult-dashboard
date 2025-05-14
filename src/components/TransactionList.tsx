@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
-import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/pages/Index";
 import { Apple, Pill, Wrench, Construction, Package, DollarSign } from "lucide-react";
 
@@ -11,7 +11,7 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ transactions, type }: TransactionListProps) {
-  const [filter, setFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   
   const getCategoryIcon = (category: string, type: TransactionType) => {
     if (type === 'income') {
@@ -50,25 +50,34 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
     }).format(amount);
   };
 
-  const filteredTransactions = transactions.filter(transaction => 
-    transaction.description.toLowerCase().includes(filter.toLowerCase()) || 
-    transaction.category.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Get unique categories from transactions
+  const categories = ['all', ...new Set(transactions.map(t => t.category))];
+  
+  const filteredTransactions = categoryFilter === 'all' 
+    ? transactions 
+    : transactions.filter(transaction => transaction.category === categoryFilter);
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder={`Filter ${type}...`}
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="max-w-sm"
-      />
+      <Tabs defaultValue="all" onValueChange={setCategoryFilter}>
+        <TabsList className="w-full flex overflow-x-auto">
+          {categories.map(category => (
+            <TabsTrigger 
+              key={category} 
+              value={category} 
+              className="capitalize flex-1"
+            >
+              {category}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       
       {filteredTransactions.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           {transactions.length === 0 
             ? `No ${type} recorded yet. Add your first ${type === 'expenses' ? 'expense' : 'income'}!` 
-            : `No ${type} match your filter criteria.`}
+            : `No ${type} in the '${categoryFilter}' category.`}
         </div>
       ) : (
         <Table>
