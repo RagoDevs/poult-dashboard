@@ -1,20 +1,83 @@
-# Welcome to your Lovable project
+# Poult Dashboard
 
-## Project info
+A React TypeScript application for tracking finances and inventory of a chicken farm.
 
-**URL**: https://lovable.dev/projects/52e875ef-75ee-4ca9-8123-70ac76d352e1
+## Features
 
-## How can I edit this code?
+- **Transaction Tracking**: Record and monitor expenses and income
+- **Categorization**: Organize transactions by categories (food, medicine, tools, fence, chicken purchases/sales)
+- **Filtering**: Filter transactions by category
+- **Chicken Inventory**: Track counts of hens, cocks, and chicks
+- **Financial Summary**: View profit, income, and expense totals
+- **Responsive Design**: Optimized for both mobile and desktop
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **Routing**: React Router
+- **UI Components**: Shadcn UI
+- **Icons**: Lucide React
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/52e875ef-75ee-4ca9-8123-70ac76d352e1) and start prompting.
+## Project Structure
 
-Changes made via Lovable will be committed automatically to this repo.
+- `src/components`: UI components (TransactionList, TransactionForm, etc.)
+- `src/pages`: Main application pages
+- `src/hooks`: Custom React hooks
+- `src/lib`: Utility functions
 
-**Use your preferred IDE**
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone [repository-url]
+
+# Navigate to project directory
+cd poult-dashboard
+
+# Install dependencies
+npm install
+# or
+yarn install
+```
+
+### Development
+
+```bash
+# Start development server
+npm run dev
+# or
+yarn dev
+```
+
+### Building for Production
+
+```bash
+# Build the application
+npm run build
+# or
+yarn build
+```
+
+## Data Structure
+
+Transactions include the following properties:
+- `id`: Unique identifier
+- `type`: 'expense' or 'income'
+- `category`: Transaction category
+- `amount`: Transaction amount
+- `date`: Transaction date
+- `description`: Additional details
+- `quantity`: Number of chickens (for chicken transactions)
+- `chickenType`: 'hen', 'cock', or 'chicks' (for chicken transactions)
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
