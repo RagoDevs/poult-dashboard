@@ -1,0 +1,32 @@
+name: deploy poult frontend app
+on: 
+  push:
+    branches:
+      - "main"
+      
+jobs:
+
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands 
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: ${{ secrets.PORT }}
+        script: |
+            
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            cd /var/www/${{ secrets.USERNAME }}/poult-dashboard
+            
+            git pull 
+
+            npm ci 
+            npm run build
+   
+            
