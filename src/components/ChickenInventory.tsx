@@ -11,7 +11,7 @@ export function ChickenInventory() {
     return savedCounts ? JSON.parse(savedCounts) : {
       hen: 0,
       cock: 0,
-      baby: 0
+      chicks: 0
     };
   });
 
@@ -21,17 +21,17 @@ export function ChickenInventory() {
   }, [counts]);
 
   // Calculate total count
-  const totalCount = counts.hen + counts.cock + counts.baby;
+  const totalCount = counts.hen + counts.cock + counts.chicks;
 
   // Functions to update counts
-  const increment = (type: 'hen' | 'cock' | 'baby') => {
+  const increment = (type: 'hen' | 'cock' | 'chicks') => {
     setCounts(prev => ({
       ...prev,
       [type]: prev[type] + 1
     }));
   };
 
-  const decrement = (type: 'hen' | 'cock' | 'baby') => {
+  const decrement = (type: 'hen' | 'cock' | 'chicks') => {
     if (counts[type] > 0) {
       setCounts(prev => ({
         ...prev,
@@ -40,7 +40,7 @@ export function ChickenInventory() {
     }
   };
 
-  const handleInputChange = (type: 'hen' | 'cock' | 'baby', value: string) => {
+  const handleInputChange = (type: 'hen' | 'cock' | 'chicks', value: string) => {
     const numValue = parseInt(value) || 0;
     setCounts(prev => ({
       ...prev,
@@ -135,25 +135,25 @@ export function ChickenInventory() {
             </div>
           </div>
           
-          {/* Children */}
+          {/* Chicks */}
           <div className="flex flex-col items-center p-4 bg-purple-50 rounded-lg shadow-sm hover:shadow transition-shadow duration-200">
             <div className="bg-purple-100 p-2 rounded-full mb-2">
-              <Baby className="h-8 w-8 text-purple-500" />
+              <Bird className="h-8 w-8 text-purple-500" />
             </div>
-            <span className="text-base font-medium mb-2 text-purple-700">Children</span>
+            <span className="text-base font-medium mb-2 text-purple-700">Chicks</span>
             <div className="flex items-center gap-2 mb-2">
               <Button 
                 variant="outline" 
                 size="icon" 
                 className="h-8 w-8 border-purple-200 hover:bg-purple-100" 
-                onClick={() => decrement('baby')}
+                onClick={() => decrement('chicks')}
               >
                 <Minus className="h-4 w-4 text-purple-600" />
               </Button>
               <Input 
                 type="number" 
-                value={counts.baby} 
-                onChange={(e) => handleInputChange('baby', e.target.value)}
+                value={counts.chicks} 
+                onChange={(e) => handleInputChange('chicks', e.target.value)}
                 className="w-16 text-center font-bold text-purple-700 border-purple-200 focus-visible:ring-purple-300"
                 min="0"
               />
@@ -161,7 +161,7 @@ export function ChickenInventory() {
                 variant="outline" 
                 size="icon" 
                 className="h-8 w-8 border-purple-200 hover:bg-purple-100" 
-                onClick={() => increment('baby')}
+                onClick={() => increment('chicks')}
               >
                 <Plus className="h-4 w-4 text-purple-600" />
               </Button>

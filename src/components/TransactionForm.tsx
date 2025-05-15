@@ -125,7 +125,7 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
             <SelectContent>
               <SelectItem value="hen">Hen (Mother)</SelectItem>
               <SelectItem value="cock">Cock (Father)</SelectItem>
-              <SelectItem value="baby">Children</SelectItem>
+              <SelectItem value="baby">Chicks</SelectItem>
             </SelectContent>
           </Select>
         </div>
