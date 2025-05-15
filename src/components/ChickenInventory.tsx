@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bird, Baby, Plus, Minus, Save, Edit, Check, X, AlertCircle } from "lucide-react";
+import { Bird, Save, X, AlertCircle, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,8 +15,8 @@ export function ChickenInventory() {
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
     type: '' as 'hen' | 'cock' | 'chicks',
-    action: '' as 'increment' | 'decrement',
-    currentValue: 0
+    currentValue: 0,
+    newValue: 0
   });
   
   // State for unsaved changes
@@ -42,13 +42,15 @@ export function ChickenInventory() {
   const totalCount = counts.hen + counts.cock + counts.chicks;
   const unsavedTotalCount = unsavedCounts.hen + unsavedCounts.cock + unsavedCounts.chicks;
   
-  // Function to open confirmation dialog
-  const openConfirmDialog = (type: 'hen' | 'cock' | 'chicks', action: 'increment' | 'decrement') => {
+  // Function to open confirmation dialog for value changes
+  const openConfirmDialog = (type: 'hen' | 'cock' | 'chicks', newValue: number) => {
+    if (newValue === unsavedCounts[type]) return; // No change, no need for confirmation
+    
     setConfirmDialog({
       isOpen: true,
       type,
-      action,
-      currentValue: unsavedCounts[type]
+      currentValue: unsavedCounts[type],
+      newValue: newValue
     });
   };
   
@@ -60,35 +62,24 @@ export function ChickenInventory() {
     });
   };
   
-  // Functions to update counts
-  const increment = (type: 'hen' | 'cock' | 'chicks') => {
+  // Function to apply confirmed value change
+  const applyValueChange = (type: 'hen' | 'cock' | 'chicks', newValue: number) => {
     if (!editMode) return;
     
     setUnsavedCounts(prev => ({
       ...prev,
-      [type]: prev[type] + 1
+      [type]: Math.max(0, newValue) // Prevent negative counts
     }));
-  };
-
-  const decrement = (type: 'hen' | 'cock' | 'chicks') => {
-    if (!editMode) return;
-    
-    if (unsavedCounts[type] > 0) {
-      setUnsavedCounts(prev => ({
-        ...prev,
-        [type]: Math.max(0, prev[type] - 1) // Prevent negative counts
-      }));
-    }
   };
 
   const handleInputChange = (type: 'hen' | 'cock' | 'chicks', value: string) => {
     if (!editMode) return;
     
     const numValue = parseInt(value) || 0;
-    setUnsavedCounts(prev => ({
-      ...prev,
-      [type]: Math.max(0, numValue) // Prevent negative counts
-    }));
+    const newValue = Math.max(0, numValue); // Prevent negative counts
+    
+    // Apply all changes directly without confirmation
+    applyValueChange(type, newValue);
   };
   
   // Function to save changes
@@ -115,13 +106,13 @@ export function ChickenInventory() {
               Confirm Change
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to {confirmDialog.action === 'increment' ? 'increase' : 'decrease'} the number of {confirmDialog.type}?
+              Are you sure you want to change the number of {confirmDialog.type}?
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center py-4">
             <div className="text-center">
               <p className="text-sm text-gray-500 mb-2">Current value: {confirmDialog.currentValue}</p>
-              <p className="text-sm text-gray-500">New value: {confirmDialog.action === 'increment' ? confirmDialog.currentValue + 1 : Math.max(0, confirmDialog.currentValue - 1)}</p>
+              <p className="text-sm text-gray-500">New value: {confirmDialog.newValue}</p>
             </div>
           </div>
           <DialogFooter className="flex justify-between sm:justify-between">
@@ -131,11 +122,7 @@ export function ChickenInventory() {
             </Button>
             <Button 
               onClick={() => {
-                if (confirmDialog.action === 'increment') {
-                  increment(confirmDialog.type);
-                } else {
-                  decrement(confirmDialog.type);
-                }
+                applyValueChange(confirmDialog.type, confirmDialog.newValue);
                 closeConfirmDialog();
               }}
             >
@@ -191,33 +178,17 @@ export function ChickenInventory() {
                 <Bird className="h-8 w-8 text-amber-500" />
               </div>
               <span className="text-base font-medium mb-2 text-amber-700">Hens</span>
-              <div className="flex items-center gap-3 mb-2">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`h-9 w-9 border-amber-200 ${editMode ? 'hover:bg-amber-100' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => editMode && openConfirmDialog('hen', 'decrement')}
-                  disabled={!editMode}
-                >
-                  <Minus className="h-5 w-5 text-amber-600" />
-                </Button>
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <Label htmlFor="hen-count" className="text-xs text-amber-700">Enter count:</Label>
                 <Input 
+                  id="hen-count"
                   type="number" 
                   value={editMode ? unsavedCounts.hen : counts.hen} 
                   onChange={(e) => handleInputChange('hen', e.target.value)}
-                  className="w-16 text-center font-bold text-amber-700 border-amber-200 focus-visible:ring-amber-300"
+                  className="w-24 text-center font-bold text-amber-700 border-amber-200 focus-visible:ring-amber-300"
                   min="0"
                   disabled={!editMode}
                 />
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`h-9 w-9 border-amber-200 ${editMode ? 'hover:bg-amber-100' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => editMode && openConfirmDialog('hen', 'increment')}
-                  disabled={!editMode}
-                >
-                  <Plus className="h-5 w-5 text-amber-600" />
-                </Button>
               </div>
               {editMode && counts.hen !== unsavedCounts.hen && (
                 <div className="text-xs text-amber-600 font-medium">
@@ -232,33 +203,17 @@ export function ChickenInventory() {
                 <Bird className="h-8 w-8 text-red-500" />
               </div>
               <span className="text-base font-medium mb-2 text-red-700">Cocks</span>
-              <div className="flex items-center gap-3 mb-2">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`h-9 w-9 border-red-200 ${editMode ? 'hover:bg-red-100' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => editMode && openConfirmDialog('cock', 'decrement')}
-                  disabled={!editMode}
-                >
-                  <Minus className="h-5 w-5 text-red-600" />
-                </Button>
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <Label htmlFor="cock-count" className="text-xs text-red-700">Enter count:</Label>
                 <Input 
+                  id="cock-count"
                   type="number" 
                   value={editMode ? unsavedCounts.cock : counts.cock} 
                   onChange={(e) => handleInputChange('cock', e.target.value)}
-                  className="w-16 text-center font-bold text-red-700 border-red-200 focus-visible:ring-red-300"
+                  className="w-24 text-center font-bold text-red-700 border-red-200 focus-visible:ring-red-300"
                   min="0"
                   disabled={!editMode}
                 />
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`h-9 w-9 border-red-200 ${editMode ? 'hover:bg-red-100' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => editMode && openConfirmDialog('cock', 'increment')}
-                  disabled={!editMode}
-                >
-                  <Plus className="h-5 w-5 text-red-600" />
-                </Button>
               </div>
               {editMode && counts.cock !== unsavedCounts.cock && (
                 <div className="text-xs text-red-600 font-medium">
@@ -273,33 +228,17 @@ export function ChickenInventory() {
                 <Bird className="h-8 w-8 text-purple-500" />
               </div>
               <span className="text-base font-medium mb-2 text-purple-700">Chicks</span>
-              <div className="flex items-center gap-3 mb-2">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`h-9 w-9 border-purple-200 ${editMode ? 'hover:bg-purple-100' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => editMode && openConfirmDialog('chicks', 'decrement')}
-                  disabled={!editMode}
-                >
-                  <Minus className="h-5 w-5 text-purple-600" />
-                </Button>
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <Label htmlFor="chicks-count" className="text-xs text-purple-700">Enter count:</Label>
                 <Input 
+                  id="chicks-count"
                   type="number" 
                   value={editMode ? unsavedCounts.chicks : counts.chicks} 
                   onChange={(e) => handleInputChange('chicks', e.target.value)}
-                  className="w-16 text-center font-bold text-purple-700 border-purple-200 focus-visible:ring-purple-300"
+                  className="w-24 text-center font-bold text-purple-700 border-purple-200 focus-visible:ring-purple-300"
                   min="0"
                   disabled={!editMode}
                 />
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className={`h-9 w-9 border-purple-200 ${editMode ? 'hover:bg-purple-100' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => editMode && openConfirmDialog('chicks', 'increment')}
-                  disabled={!editMode}
-                >
-                  <Plus className="h-5 w-5 text-purple-600" />
-                </Button>
               </div>
               {editMode && counts.chicks !== unsavedCounts.chicks && (
                 <div className="text-xs text-purple-600 font-medium">
