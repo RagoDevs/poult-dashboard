@@ -10,6 +10,7 @@ import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { ChickenInventory } from "@/components/ChickenInventory";
+import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'fence' | 'chicken' | 'other';
@@ -31,20 +32,118 @@ export interface Transaction {
   date: string;
   description: string;
   quantity?: number;
-  chickenType?: 'hen' | 'cock' | 'baby';
+  chickenType?: 'hen' | 'cock' | 'chicks';
 }
+
+// Type for inventory history entry
+type InventoryChangeReason = 'purchase' | 'sale' | 'birth' | 'death' | 'gift' | 'other';
+type InventoryHistoryEntry = {
+  date: string;
+  type: 'hen' | 'cock' | 'chicks';
+  previousValue: number;
+  newValue: number;
+  change: number;
+  reason: InventoryChangeReason;
+  notes: string;
+};
 
 const Index = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
+  const [activeInventoryTab, setActiveInventoryTab] = useState<'current' | 'history'>('current');
   const isMobile = useIsMobile();
+  
+  // Load chicken counts from localStorage
+  const [chickenCounts, setChickenCounts] = useState(() => {
+    const savedCounts = localStorage.getItem('chickenCounts');
+    return savedCounts ? JSON.parse(savedCounts) : {
+      hen: 0,
+      cock: 0,
+      chicks: 0
+    };
+  });
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+  // Function to update chicken inventory
+  const updateChickenInventory = (
+    chickenType: 'hen' | 'cock' | 'chicks', 
+    quantity: number, 
+    isIncrease: boolean,
+    reason: InventoryChangeReason,
+    description: string
+  ) => {
+    // Get current counts
+    const currentCount = chickenCounts[chickenType];
+    
+    // Calculate new count (increase or decrease)
+    const newCount = isIncrease ? currentCount + quantity : Math.max(0, currentCount - quantity);
+    
+    // Create history entry
+    const historyEntry: InventoryHistoryEntry = {
+      date: new Date().toISOString(),
+      type: chickenType,
+      previousValue: currentCount,
+      newValue: newCount,
+      change: isIncrease ? quantity : -quantity,
+      reason,
+      notes: description
+    };
+    
+    // Update inventory history in localStorage
+    const savedHistory = localStorage.getItem('chickenInventoryHistory');
+    const inventoryHistory = savedHistory ? JSON.parse(savedHistory) : [];
+    const updatedHistory = [...inventoryHistory, historyEntry];
+    localStorage.setItem('chickenInventoryHistory', JSON.stringify(updatedHistory));
+    
+    // Update counts
+    const newCounts = {
+      ...chickenCounts,
+      [chickenType]: newCount
+    };
+    
+    setChickenCounts(newCounts);
+    localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
+  };
+
+  const addTransaction = (transaction: Omit<Transaction, 'id'> & { bulkQuantities?: { hen: number; cock: number; chicks: number } }) => {
     const newTransaction = {
       ...transaction,
       id: crypto.randomUUID(),
     };
+    
+    // Handle bulk chicken transactions
+    if (transaction.category === 'chicken' && transaction.bulkQuantities) {
+      const { hen: henCount, cock: cockCount, chicks: chicksCount } = transaction.bulkQuantities;
+      const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
+      const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
+      
+      // Update inventory for each chicken type with quantity > 0
+      if (henCount > 0) {
+        updateChickenInventory('hen', henCount, isIncrease, reason, transaction.description);
+      }
+      
+      if (cockCount > 0) {
+        updateChickenInventory('cock', cockCount, isIncrease, reason, transaction.description);
+      }
+      
+      if (chicksCount > 0) {
+        updateChickenInventory('chicks', chicksCount, isIncrease, reason, transaction.description);
+      }
+    }
+    // Handle single chicken type transactions
+    else if (transaction.category === 'chicken' && transaction.chickenType && transaction.quantity) {
+      const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
+      const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
+      
+      updateChickenInventory(
+        transaction.chickenType,
+        transaction.quantity,
+        isIncrease,
+        reason,
+        transaction.description
+      );
+    }
+    
     setTransactions([...transactions, newTransaction]);
     setShowTransactionForm(false);
   };
@@ -62,7 +161,38 @@ const Index = () => {
         </div>
         
         <div className="mb-8">
-          <ChickenInventory />
+          {/* Inventory Tab Navigation */}
+          <div className="flex justify-start mb-4">
+            <div className="flex space-x-2">
+              <Button 
+                variant={activeInventoryTab === 'current' ? 'default' : 'outline'} 
+                onClick={() => setActiveInventoryTab('current')}
+                className="flex-1 sm:flex-initial"
+              >
+                Current Inventory
+              </Button>
+              <Button 
+                variant={activeInventoryTab === 'history' ? 'default' : 'outline'} 
+                onClick={() => setActiveInventoryTab('history')}
+                className="flex-1 sm:flex-initial"
+              >
+                Inventory History
+              </Button>
+            </div>
+          </div>
+          
+          {/* Show either current inventory or history based on active tab */}
+          {activeInventoryTab === 'current' ? (
+            <ChickenInventory 
+              externalCounts={chickenCounts}
+              onInventoryChange={(newCounts) => {
+                setChickenCounts(newCounts);
+                localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
+              }}
+            />
+          ) : (
+            <ChickenInventoryHistory />
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
