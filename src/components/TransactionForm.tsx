@@ -124,7 +124,6 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
                 <option value="food">Food</option>
                 <option value="medicine">Medicine</option>
                 <option value="tools">Tools</option>
-                <option value="fence">Fence</option>
                 <option value="chicken">Chicken Purchase</option>
                 <option value="other">Other</option>
               </>

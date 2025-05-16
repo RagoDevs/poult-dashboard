@@ -13,7 +13,7 @@ import { ChickenInventory } from "@/components/ChickenInventory";
 import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'fence' | 'chicken' | 'other';
+export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'other';
 export type TransactionType = 'expense' | 'income';
 
 export interface Expense {
