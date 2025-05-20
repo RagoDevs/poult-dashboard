@@ -72,14 +72,16 @@ export default function ForgotPassword() {
             </form>
           </CardContent>
         )}
-        <CardFooter>
-          <div className="text-sm text-center w-full">
-            <Link to="/login" className="inline-flex items-center text-primary hover:underline">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Back to login
-            </Link>
-          </div>
-        </CardFooter>
+        {!isSubmitted && (
+          <CardFooter>
+            <div className="text-sm text-center w-full">
+              <Link to="/login" className="inline-flex items-center text-primary hover:underline">
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Back to login
+              </Link>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   )
