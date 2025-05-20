@@ -152,100 +152,148 @@ const Index = () => {
   const income = transactions.filter(transaction => transaction.type === 'income');
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center text-gray-800">Chicken Farm Financial Tracker</h1>
-        
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3 mb-8">
-          <TransactionSummary transactions={transactions} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div className="container mx-auto py-4 px-4 sm:px-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center sm:justify-start">
+            <span className="mr-2">🐔</span> Kuku Farm Financial Tracker
+          </h1>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto py-6 sm:py-8 px-4 sm:px-6">
+        {/* Financial Summary Cards */}
+        <section className="mb-10">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+            <TransactionSummary transactions={transactions} />
+          </div>
+        </section>
         
-        <div className="mb-8">
-          {/* Inventory Tab Navigation */}
-          <div className="flex justify-start mb-4">
-            <div className="flex space-x-2">
-              <Button 
-                variant={activeInventoryTab === 'current' ? 'default' : 'outline'} 
-                onClick={() => setActiveInventoryTab('current')}
-                className="flex-1 sm:flex-initial"
-              >
-                Current Inventory
-              </Button>
-              <Button 
-                variant={activeInventoryTab === 'history' ? 'default' : 'outline'} 
-                onClick={() => setActiveInventoryTab('history')}
-                className="flex-1 sm:flex-initial"
-              >
-                Inventory History
-              </Button>
+        {/* Inventory Section */}
+        <section className="mb-10">
+          <div className="flex flex-col">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Chicken Inventory</h2>
+                <p className="text-sm text-gray-500">Manage and track your chicken stock</p>
+              </div>
+              <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200">
+                <Button 
+                  variant={activeInventoryTab === 'current' ? 'default' : 'ghost'} 
+                  onClick={() => setActiveInventoryTab('current')}
+                  size="sm"
+                  className="rounded-md text-sm"
+                >
+                  Current Inventory
+                </Button>
+                <Button 
+                  variant={activeInventoryTab === 'history' ? 'default' : 'ghost'} 
+                  onClick={() => setActiveInventoryTab('history')}
+                  size="sm"
+                  className="rounded-md text-sm"
+                >
+                  Inventory History
+                </Button>
+              </div>
+            </div>
+            
+            {/* Inventory Content */}
+            <div className="rounded-xl overflow-hidden">
+              {activeInventoryTab === 'current' ? (
+                <ChickenInventory 
+                  externalCounts={chickenCounts}
+                  onInventoryChange={(newCounts) => {
+                    setChickenCounts(newCounts);
+                    localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
+                  }}
+                />
+              ) : (
+                <ChickenInventoryHistory />
+              )}
             </div>
           </div>
-          
-          {/* Show either current inventory or history based on active tab */}
-          {activeInventoryTab === 'current' ? (
-            <ChickenInventory 
-              externalCounts={chickenCounts}
-              onInventoryChange={(newCounts) => {
-                setChickenCounts(newCounts);
-                localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
-              }}
-            />
-          ) : (
-            <ChickenInventoryHistory />
-          )}
-        </div>
+        </section>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <div className="flex space-x-2 w-full sm:w-auto">
-            <Button 
-              variant={activeTab === 'expenses' ? 'default' : 'outline'} 
-              onClick={() => setActiveTab('expenses')}
-              className="flex-1 sm:flex-initial"
-            >
-              Expenses
-            </Button>
-            <Button 
-              variant={activeTab === 'income' ? 'default' : 'outline'} 
-              onClick={() => setActiveTab('income')}
-              className="flex-1 sm:flex-initial"
-            >
-              Income/Sales
-            </Button>
+        {/* Transactions Section */}
+        <section>
+          <div className="flex flex-col">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Financial Transactions</h2>
+                <p className="text-sm text-gray-500">Manage expenses and income for your farm</p>
+              </div>
+              <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200">
+                <Button 
+                  variant={activeTab === 'expenses' ? 'default' : 'ghost'} 
+                  onClick={() => setActiveTab('expenses')}
+                  size="sm"
+                  className="rounded-md text-sm"
+                >
+                  Expenses
+                </Button>
+                <Button 
+                  variant={activeTab === 'income' ? 'default' : 'ghost'} 
+                  onClick={() => setActiveTab('income')}
+                  size="sm"
+                  className="rounded-md text-sm"
+                >
+                  Income
+                </Button>
+              </div>
+              <Button 
+                onClick={() => setShowTransactionForm(true)} 
+                className="sm:w-auto border-gray-200 bg-white shadow-sm hover:bg-gray-50"
+                variant="outline"
+                size="sm"
+              >
+                <Plus className="mr-2 h-4 w-4 text-gray-600" />
+                Add {activeTab === 'expenses' ? 'Expense' : 'Income'}
+              </Button>
+            </div>
+            
+            {/* Transaction Form */}
+            {showTransactionForm && (
+              <Card className="mb-8 border border-gray-200 shadow-sm">
+                <CardHeader className="pb-3 bg-gray-50">
+                  <CardTitle className="text-lg">Add New {activeTab === 'expenses' ? 'Expense' : 'Income'}</CardTitle>
+                  <CardDescription>
+                    Enter the details of your new {activeTab === 'expenses' ? 'expense' : 'income'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <TransactionForm 
+                    onSubmit={addTransaction} 
+                    onCancel={() => setShowTransactionForm(false)} 
+                    type={activeTab === 'expenses' ? 'expense' : 'income'}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Transaction List */}
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="pb-3 bg-gray-50 border-b border-gray-200">
+                <CardTitle className="text-lg">{activeTab === 'expenses' ? 'Recent Expenses' : 'Recent Income'}</CardTitle>
+                <CardDescription>View and filter your {activeTab === 'expenses' ? 'expenses' : 'income'}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <TransactionList transactions={activeTab === 'expenses' ? expenses : income} type={activeTab} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <Button onClick={() => setShowTransactionForm(true)} className="w-full sm:w-auto">
-            <Plus className="mr-2" />
-            Add {activeTab === 'expenses' ? 'Expense' : 'Income'}
-          </Button>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="mt-10 py-6 border-t border-gray-200 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 text-center text-gray-500 text-sm">
+          <p>© {new Date().getFullYear()} Kuku Farm. All rights reserved.</p>
         </div>
-
-        {showTransactionForm ? (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Add New {activeTab === 'expenses' ? 'Expense' : 'Income'}</CardTitle>
-              <CardDescription>
-                Enter the details of your new {activeTab === 'expenses' ? 'expense' : 'income'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TransactionForm 
-                onSubmit={addTransaction} 
-                onCancel={() => setShowTransactionForm(false)} 
-                type={activeTab === 'expenses' ? 'expense' : 'income'}
-              />
-            </CardContent>
-          </Card>
-        ) : null}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{activeTab === 'expenses' ? 'Recent Expenses' : 'Recent Income'}</CardTitle>
-            <CardDescription>View and filter your {activeTab === 'expenses' ? 'expenses' : 'income'}</CardDescription>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <TransactionList transactions={activeTab === 'expenses' ? expenses : income} type={activeTab} />
-          </CardContent>
-        </Card>
-      </div>
+      </footer>
     </div>
   );
 };

@@ -50,27 +50,14 @@ export function ChickenInventoryHistory() {
     return true;
   });
   
-  // Helper function to get color class based on reason
-  const getReasonColorClass = (reason: InventoryChangeReason): string => {
-    switch (reason) {
-      case 'purchase': return 'text-blue-600';
-      case 'sale': return 'text-purple-600';
-      case 'birth': return 'text-green-600';
-      case 'death': return 'text-red-600';
-      case 'gift': return 'text-green-400';
-      case 'other': return 'text-gray-600';
-      default: return '';
-    }
+  // Helper function to get badge class for displaying reason
+  const getReasonBadgeClass = (reason: InventoryChangeReason): string => {
+    return 'bg-gray-100 text-gray-700 py-1 px-2 rounded text-xs font-medium';
   };
   
-  // Helper function to get color class based on chicken type
-  const getTypeColorClass = (type: 'hen' | 'cock' | 'chicks'): string => {
-    switch (type) {
-      case 'hen': return 'text-amber-700';
-      case 'cock': return 'text-red-700';
-      case 'chicks': return 'text-purple-700';
-      default: return '';
-    }
+  // Helper function to get subtle indicator for chicken type
+  const getTypeIndicatorClass = (): string => {
+    return 'font-medium text-gray-700';
   };
   
   // Helper function to format chicken type for display
@@ -84,23 +71,23 @@ export function ChickenInventoryHistory() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Inventory History</CardTitle>
+    <Card className="w-full overflow-hidden border border-gray-200 shadow-sm">
+      <CardHeader className="bg-gray-50 border-b border-gray-200 pb-4">
+        <CardTitle className="text-xl font-bold text-gray-900">Inventory History</CardTitle>
         <CardDescription>Track all changes to your chicken inventory</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="space-y-2 flex-1">
-            <Label htmlFor="type-filter">Filter by Type</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="space-y-2">
+            <Label htmlFor="type-filter" className="text-sm font-medium text-gray-700">Filter by Type</Label>
             <Select
               value={filter.type}
               onValueChange={(value: 'all' | 'hen' | 'cock' | 'chicks') => 
                 setFilter({...filter, type: value})
               }
             >
-              <SelectTrigger id="type-filter">
+              <SelectTrigger id="type-filter" className="border-gray-200 bg-white">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -112,15 +99,15 @@ export function ChickenInventoryHistory() {
             </Select>
           </div>
           
-          <div className="space-y-2 flex-1">
-            <Label htmlFor="reason-filter">Filter by Reason</Label>
+          <div className="space-y-2">
+            <Label htmlFor="reason-filter" className="text-sm font-medium text-gray-700">Filter by Reason</Label>
             <Select
               value={filter.reason}
               onValueChange={(value: 'all' | InventoryChangeReason) => 
                 setFilter({...filter, reason: value})
               }
             >
-              <SelectTrigger id="reason-filter">
+              <SelectTrigger id="reason-filter" className="border-gray-200 bg-white">
                 <SelectValue placeholder="Select reason" />
               </SelectTrigger>
               <SelectContent>
@@ -135,59 +122,67 @@ export function ChickenInventoryHistory() {
             </Select>
           </div>
           
-          <div className="space-y-2 flex-1">
-            <Label htmlFor="search-notes">Search Notes</Label>
+          <div className="space-y-2">
+            <Label htmlFor="search-notes" className="text-sm font-medium text-gray-700">Search Notes</Label>
             <Input
               id="search-notes"
               placeholder="Search in notes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="border-gray-200 bg-white"
             />
           </div>
         </div>
         
         {/* History Table */}
         {filteredHistory.length > 0 ? (
-          <div className="border rounded-md">
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Change</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Notes</TableHead>
+              <TableHeader className="bg-gray-50">
+                <TableRow className="border-b border-gray-200">
+                  <TableHead className="whitespace-nowrap font-medium text-gray-700">Date</TableHead>
+                  <TableHead className="whitespace-nowrap font-medium text-gray-700">Type</TableHead>
+                  <TableHead className="whitespace-nowrap font-medium text-gray-700">Change</TableHead>
+                  <TableHead className="whitespace-nowrap font-medium text-gray-700">Reason</TableHead>
+                  <TableHead className="whitespace-nowrap font-medium text-gray-700">Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredHistory.map((entry, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
+                  <TableRow key={index} className="hover:bg-gray-50 border-t border-gray-100">
+                    <TableCell className="font-medium text-gray-700">
                       {format(new Date(entry.date), 'MMM d, yyyy h:mm a')}
                     </TableCell>
-                    <TableCell className={getTypeColorClass(entry.type)}>
+                    <TableCell className={getTypeIndicatorClass()}>
                       {formatChickenType(entry.type)}
                     </TableCell>
                     <TableCell>
-                      <span className={entry.change > 0 ? 'text-green-600' : 'text-red-600'}>
+                      <span className={entry.change > 0 ? 'text-gray-900 font-medium' : 'text-gray-900 font-medium'}>
                         {entry.change > 0 ? '+' : ''}{entry.change}
                       </span>
                       <span className="text-gray-500 text-xs ml-1">
                         ({entry.previousValue} → {entry.newValue})
                       </span>
                     </TableCell>
-                    <TableCell className={getReasonColorClass(entry.reason)}>
-                      {entry.reason.charAt(0).toUpperCase() + entry.reason.slice(1)}
+                    <TableCell>
+                      <span className={getReasonBadgeClass(entry.reason)}>
+                        {entry.reason.charAt(0).toUpperCase() + entry.reason.slice(1)}
+                      </span>
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">{entry.notes}</TableCell>
+                    <TableCell className="max-w-xs truncate text-gray-600">{entry.notes}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            No history records found{searchTerm || filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
+          <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+            <p className="text-gray-500 mb-2">
+              No history records found{searchTerm || filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
+            </p>
+            {(searchTerm || filter.type !== 'all' || filter.reason !== 'all') && (
+              <p className="text-sm text-gray-400">Try adjusting your filters</p>
+            )}
           </div>
         )}
       </CardContent>
