@@ -24,29 +24,19 @@ export function ChickenInventoryHistory() {
     reason: 'all' | InventoryChangeReason;
   }>({ type: 'all', reason: 'all' });
 
-  const [searchTerm, setSearchTerm] = useState('');
-  
   // Load history from localStorage
   const inventoryHistory: InventoryHistoryEntry[] = JSON.parse(
     localStorage.getItem('chickenInventoryHistory') || '[]'
   );
   
-  // Sort history by date (newest first)
-  const sortedHistory = [...inventoryHistory].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  // Filter history based on selected filters
+  const sortedHistory = [...inventoryHistory].sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
   
-  // Apply filters
   const filteredHistory = sortedHistory.filter(entry => {
-    // Filter by type
     if (filter.type !== 'all' && entry.type !== filter.type) return false;
-    
-    // Filter by reason
     if (filter.reason !== 'all' && entry.reason !== filter.reason) return false;
-    
-    // Filter by search term (in notes)
-    if (searchTerm && !entry.notes.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    
     return true;
   });
   
@@ -78,7 +68,7 @@ export function ChickenInventoryHistory() {
       </CardHeader>
       <CardContent className="p-6">
         {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
           <div className="space-y-2">
             <Label htmlFor="type-filter" className="text-sm font-medium text-gray-700">Filter by Type</Label>
             <Select
@@ -121,17 +111,6 @@ export function ChickenInventoryHistory() {
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="search-notes" className="text-sm font-medium text-gray-700">Search Notes</Label>
-            <Input
-              id="search-notes"
-              placeholder="Search in notes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-gray-200 bg-white"
-            />
-          </div>
         </div>
         
         {/* History Table */}
@@ -144,7 +123,6 @@ export function ChickenInventoryHistory() {
                   <TableHead className="whitespace-nowrap font-medium text-gray-700">Type</TableHead>
                   <TableHead className="whitespace-nowrap font-medium text-gray-700">Change</TableHead>
                   <TableHead className="whitespace-nowrap font-medium text-gray-700">Reason</TableHead>
-                  <TableHead className="whitespace-nowrap font-medium text-gray-700">Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -169,7 +147,6 @@ export function ChickenInventoryHistory() {
                         {entry.reason.charAt(0).toUpperCase() + entry.reason.slice(1)}
                       </span>
                     </TableCell>
-                    <TableCell className="max-w-xs truncate text-gray-600">{entry.notes}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -178,9 +155,9 @@ export function ChickenInventoryHistory() {
         ) : (
           <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">
             <p className="text-gray-500 mb-2">
-              No history records found{searchTerm || filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
+              No history records found{filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
             </p>
-            {(searchTerm || filter.type !== 'all' || filter.reason !== 'all') && (
+            {(filter.type !== 'all' || filter.reason !== 'all') && (
               <p className="text-sm text-gray-400">Try adjusting your filters</p>
             )}
           </div>

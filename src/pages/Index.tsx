@@ -154,10 +154,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto py-4 px-4 sm:px-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center sm:justify-start">
-            <span className="mr-2">🐔</span> Kuku Farm Financial Tracker
+      <header className="py-6 border-b border-gray-200 bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <h1 className="text-3xl md:text-4xl font-bold flex items-center">
+            <span className="mr-3" role="img" aria-label="chicken">🐔</span>
+            Kuku Farm
           </h1>
         </div>
       </header>
@@ -174,12 +175,8 @@ const Index = () => {
         {/* Inventory Section */}
         <section className="mb-10">
           <div className="flex flex-col">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Chicken Inventory</h2>
-                <p className="text-sm text-gray-500">Manage and track your chicken stock</p>
-              </div>
-              <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200">
+            <div className="flex justify-center mb-4 md:mb-5">
+              <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 shadow-sm">
                 <Button 
                   variant={activeInventoryTab === 'current' ? 'default' : 'ghost'} 
                   onClick={() => setActiveInventoryTab('current')}
@@ -219,38 +216,36 @@ const Index = () => {
         {/* Transactions Section */}
         <section>
           <div className="flex flex-col">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Financial Transactions</h2>
-                <p className="text-sm text-gray-500">Manage expenses and income for your farm</p>
-              </div>
-              <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200">
+            <div className="flex flex-col items-center mb-6 gap-4">
+              <div className="flex justify-center gap-4 w-full">
+                <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 shadow-sm">
+                  <Button 
+                    variant={activeTab === 'expenses' ? 'default' : 'ghost'} 
+                    onClick={() => setActiveTab('expenses')}
+                    size="sm"
+                    className="rounded-md text-sm"
+                  >
+                    Expenses
+                  </Button>
+                  <Button 
+                    variant={activeTab === 'income' ? 'default' : 'ghost'} 
+                    onClick={() => setActiveTab('income')}
+                    size="sm"
+                    className="rounded-md text-sm"
+                  >
+                    Income
+                  </Button>
+                </div>
                 <Button 
-                  variant={activeTab === 'expenses' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveTab('expenses')}
+                  onClick={() => setShowTransactionForm(true)} 
+                  className="border-gray-200 bg-white shadow-sm hover:bg-gray-50"
+                  variant="outline"
                   size="sm"
-                  className="rounded-md text-sm"
                 >
-                  Expenses
-                </Button>
-                <Button 
-                  variant={activeTab === 'income' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveTab('income')}
-                  size="sm"
-                  className="rounded-md text-sm"
-                >
-                  Income
+                  <Plus className="mr-2 h-4 w-4 text-gray-600" />
+                  Add {activeTab === 'expenses' ? 'Expense' : 'Income'}
                 </Button>
               </div>
-              <Button 
-                onClick={() => setShowTransactionForm(true)} 
-                className="sm:w-auto border-gray-200 bg-white shadow-sm hover:bg-gray-50"
-                variant="outline"
-                size="sm"
-              >
-                <Plus className="mr-2 h-4 w-4 text-gray-600" />
-                Add {activeTab === 'expenses' ? 'Expense' : 'Income'}
-              </Button>
             </div>
             
             {/* Transaction Form */}

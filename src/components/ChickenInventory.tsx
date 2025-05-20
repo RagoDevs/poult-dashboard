@@ -260,49 +260,41 @@ export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenI
       </Dialog>
 
       <Card className="w-full overflow-hidden border border-gray-100 shadow-sm">
-        <CardContent className="p-6">
-
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex px-6 py-3 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
-              <div className="text-center">
-                <div className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">TOTAL INVENTORY</div>
-                <div className="text-3xl font-bold text-gray-900">{totalCount}</div>
-              </div>
-            </div>
+        <CardContent className="p-4">
+          <div className="border-b border-gray-200 pb-3 mb-4 flex items-center justify-between">
+            <div className="text-sm font-medium text-gray-500">Total Inventory</div>
+            <div className="text-xl font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">{totalCount}</div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Chicken Inventory Cards */}
             {[
-              { type: 'hen', label: 'Hens', count: counts.hen, index: 1 },
-              { type: 'cock', label: 'Cocks', count: counts.cock, index: 2 },
-              { type: 'chicks', label: 'Chicks', count: counts.chicks, index: 3 }
+              { type: 'hen', label: 'Hens', count: counts.hen },
+              { type: 'cock', label: 'Cocks', count: counts.cock },
+              { type: 'chicks', label: 'Chicks', count: counts.chicks }
             ].map((item) => (
               <div 
                 key={item.type}
-                className={"border border-gray-200 rounded-lg shadow-sm bg-white overflow-hidden"}
+                className="border border-gray-200 rounded-lg bg-white overflow-hidden hover:shadow-sm transition-shadow"
               >
-                <div className="p-5 flex-grow">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-medium text-gray-900">{item.label}</h3>
-                    <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
-                      <span className="text-xs font-medium text-gray-600">{item.index}</span>
+                <div className="px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-md font-medium text-gray-900">{item.label}</h3>
                     </div>
+                    <div className="text-3xl font-bold text-gray-900 ml-2">{item.count}</div>
                   </div>
                   
-                  <div className="mb-4">
-                    <div className="text-4xl font-bold text-gray-900">{item.count}</div>
-                    <div className="mt-1 text-sm text-gray-500">{item.count === 1 ? 'bird' : 'birds'}</div>
+                  <div className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 text-xs py-1" 
+                      onClick={() => openEditDialog(item.type as ChickenType)}
+                    >
+                      <Edit className="h-3 w-3 mr-1" /> Update Count
+                    </Button>
                   </div>
-                
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="w-full border-gray-200 hover:bg-gray-50 text-gray-700" 
-                    onClick={() => openEditDialog(item.type as ChickenType)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" /> Update Count
-                  </Button>
                 </div>
               </div>
             ))}
