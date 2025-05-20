@@ -8,7 +8,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Signup() {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,7 +20,7 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
       toast({
         title: "Error",
         description: "Please fill in all fields.",
@@ -37,6 +38,8 @@ export default function Signup() {
       return;
     }
     
+    // Combine first name and last name into a single name field
+    const name = `${firstName} ${lastName}`;
     const success = await signup(name, email, password);
     if (success) {
       // Redirect to login page after successful signup
@@ -55,6 +58,30 @@ export default function Signup() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input 
+                  id="firstName" 
+                  type="text" 
+                  placeholder="John" 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input 
+                  id="lastName" 
+                  type="text" 
+                  placeholder="Doe" 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input 
