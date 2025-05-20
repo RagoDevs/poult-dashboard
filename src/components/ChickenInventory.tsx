@@ -262,7 +262,7 @@ export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenI
       <Card className="w-full overflow-hidden border border-gray-100 shadow-sm">
         <CardContent className="p-4">
           <div className="border-b border-gray-200 pb-3 mb-4 flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500">Total Inventory</div>
+            <div className="text-sm font-medium text-gray-500">Total Chickens</div>
             <div className="text-xl font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">{totalCount}</div>
           </div>
           

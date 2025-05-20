@@ -63,8 +63,8 @@ export function ChickenInventoryHistory() {
   return (
     <Card className="w-full overflow-hidden border border-gray-200 shadow-sm">
       <CardHeader className="bg-gray-50 border-b border-gray-200 pb-4">
-        <CardTitle className="text-xl font-bold text-gray-900">Inventory History</CardTitle>
-        <CardDescription>Track all changes to your chicken inventory</CardDescription>
+        <CardTitle className="text-xl font-bold text-gray-900">Chicken History</CardTitle>
+        <CardDescription>Track all changes to your chicken flock</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
         {/* Filters */}

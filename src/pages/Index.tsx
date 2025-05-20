@@ -183,7 +183,7 @@ const Index = () => {
                   size="sm"
                   className="rounded-md text-sm"
                 >
-                  Current Inventory
+                  Current Chickens
                 </Button>
                 <Button 
                   variant={activeInventoryTab === 'history' ? 'default' : 'ghost'} 
@@ -191,7 +191,7 @@ const Index = () => {
                   size="sm"
                   className="rounded-md text-sm"
                 >
-                  Inventory History
+                  Chicken History
                 </Button>
               </div>
             </div>
