@@ -208,9 +208,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const activateAccount = async (token: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/users/activate?token=${token}`, {
-        method: 'GET',
+      const response = await fetch(`${API_BASE_URL}/users/activate`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
       });
       
       if (!response.ok) {
