@@ -259,89 +259,77 @@ export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenI
         </DialogContent>
       </Dialog>
 
-      <Card className="w-full overflow-hidden border shadow-sm">
-        <CardHeader className="bg-white pb-2">
+      <Card className="w-full overflow-hidden border-0 shadow">
+        <CardHeader className="bg-white pt-8 pb-4 px-8">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-2xl font-bold">Chicken Inventory</CardTitle>
-              <CardDescription>Track your chicken population</CardDescription>
+              <CardTitle className="text-3xl font-bold tracking-tight text-gray-900">Chicken Inventory</CardTitle>
+              <CardDescription className="text-gray-500 mt-1">Track and manage your chicken population</CardDescription>
             </div>
           </div>
         </CardHeader>
         
-        <CardContent className="p-6">
-          <div className="text-center mb-6">
-            <div className="inline-flex px-4 py-2 bg-gray-50 border border-gray-100 rounded-full">
-              <p className="text-md font-medium text-gray-700">Total Chickens: <span className="font-bold text-lg text-gray-900">{totalCount}</span></p>
+        <CardContent className="px-8 pb-8">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center px-6 py-3 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Inventory</span>
+                <span className="text-3xl font-bold text-gray-900 mt-1">{totalCount}</span>
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Hens */}
-            <div 
-              className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg bg-white border border-gray-100"
-              style={{
-                boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 12px"
-              }}
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full bg-gray-400 transform translate-x-8 -translate-y-8"></div>
-              <div className="absolute bottom-0 left-0 w-20 h-20 opacity-5 rounded-full bg-gray-400 transform -translate-x-5 translate-y-5"></div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-1">Hens</h3>
-              <div className="mt-3 mb-4">
-                <div className="text-4xl font-extrabold text-gray-900">{counts.hen}</div>
-              </div>
-              <Button 
-                variant="outline" 
-                className="mt-2 w-full hover:bg-gray-50 text-gray-700" 
-                onClick={() => openEditDialog('hen')}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card Generator Function */}
+            {[
+              { type: 'hen', label: 'Hens', count: counts.hen },
+              { type: 'cock', label: 'Cocks', count: counts.cock },
+              { type: 'chicks', label: 'Chicks', count: counts.chicks }
+            ].map((item, index) => (
+              <div 
+                key={item.type}
+                className={cn(
+                  "relative overflow-hidden rounded-2xl transition-all duration-300",
+                  "hover:translate-y-[-4px] hover:shadow-xl",
+                  "bg-white backdrop-blur-sm",
+                  "border border-gray-200",
+                  "flex flex-col"
+                )}
+                style={{
+                  boxShadow: "rgba(17, 17, 26, 0.05) 0px 4px 16px, rgba(17, 17, 26, 0.05) 0px 8px 32px"
+                }}
               >
-                <Edit className="h-4 w-4 mr-2" /> Update
-              </Button>
-            </div>
-            
-            {/* Cocks */}
-            <div 
-              className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg bg-white border border-gray-100"
-              style={{
-                boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 12px"
-              }}
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full bg-gray-400 transform translate-x-8 -translate-y-8"></div>
-              <div className="absolute bottom-0 left-0 w-20 h-20 opacity-5 rounded-full bg-gray-400 transform -translate-x-5 translate-y-5"></div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-1">Cocks</h3>
-              <div className="mt-3 mb-4">
-                <div className="text-4xl font-extrabold text-gray-900">{counts.cock}</div>
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 opacity-5 rounded-full bg-gray-500 transform translate-x-10 -translate-y-10"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 opacity-5 rounded-full bg-gray-500 transform -translate-x-8 translate-y-8"></div>
+                
+                {/* Content area */}
+                <div className="p-6 flex-grow">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-700">{item.label}</h3>
+                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <span className="text-xs font-medium text-gray-600">{index + 1}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 mb-6">
+                    <div className="text-5xl font-bold text-gray-900">{item.count}</div>
+                    <div className="mt-1 text-sm text-gray-500">{item.count === 1 ? 'bird' : 'birds'}</div>
+                  </div>
+                </div>
+                
+                {/* Button area with subtle separation */}
+                <div className="px-6 pb-6">
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all duration-200" 
+                    onClick={() => openEditDialog(item.type as ChickenType)}
+                  >
+                    <Edit className="h-4 w-4 mr-2 text-gray-500" /> Update Count
+                  </Button>
+                </div>
               </div>
-              <Button 
-                variant="outline" 
-                className="mt-2 w-full hover:bg-gray-50 text-gray-700" 
-                onClick={() => openEditDialog('cock')}
-              >
-                <Edit className="h-4 w-4 mr-2" /> Update
-              </Button>
-            </div>
-            
-            {/* Chicks */}
-            <div 
-              className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg bg-white border border-gray-100"
-              style={{
-                boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 12px"
-              }}
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full bg-gray-400 transform translate-x-8 -translate-y-8"></div>
-              <div className="absolute bottom-0 left-0 w-20 h-20 opacity-5 rounded-full bg-gray-400 transform -translate-x-5 translate-y-5"></div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-1">Chicks</h3>
-              <div className="mt-3 mb-4">
-                <div className="text-4xl font-extrabold text-gray-900">{counts.chicks}</div>
-              </div>
-              <Button 
-                variant="outline" 
-                className="mt-2 w-full hover:bg-gray-50 text-gray-700" 
-                onClick={() => openEditDialog('chicks')}
-              >
-                <Edit className="h-4 w-4 mr-2" /> Update
-              </Button>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
