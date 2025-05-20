@@ -30,8 +30,10 @@ export default function ActivateAccount() {
       }
     };
 
+    // Only run once when component mounts with a token
     performActivation();
-  }, [token, activateAccount])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]) // Removed activateAccount from dependencies
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
