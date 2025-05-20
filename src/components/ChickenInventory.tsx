@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bird, Edit, Plus, Minus, Check, X } from "lucide-react";
+import { Edit, Check, X, Plus, Minus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 // Define reason types for inventory changes
 type InventoryChangeReason = 'purchase' | 'sale' | 'birth' | 'death' | 'gift' | 'other';
@@ -258,79 +259,87 @@ export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenI
         </DialogContent>
       </Dialog>
 
-      <Card className="w-full">
-        <CardHeader className="pb-2">
+      <Card className="w-full overflow-hidden border shadow-sm">
+        <CardHeader className="bg-white pb-2">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-xl">Chicken Inventory</CardTitle>
+              <CardTitle className="text-2xl font-bold">Chicken Inventory</CardTitle>
               <CardDescription>Track your chicken population</CardDescription>
             </div>
           </div>
         </CardHeader>
         
-        <CardContent>
-          <div className="text-center mb-4">
-            <p className="text-sm text-gray-500">Total Chickens: {totalCount}</p>
+        <CardContent className="p-6">
+          <div className="text-center mb-6">
+            <div className="inline-flex px-4 py-2 bg-gray-50 border border-gray-100 rounded-full">
+              <p className="text-md font-medium text-gray-700">Total Chickens: <span className="font-bold text-lg text-gray-900">{totalCount}</span></p>
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Hens */}
-            <div className="flex flex-col items-center p-4 bg-amber-50 rounded-lg shadow-sm hover:shadow transition-shadow duration-200">
-              <div className="bg-amber-100 p-2 rounded-full mb-2">
-                <Bird className="h-8 w-8 text-amber-500" />
-              </div>
-              <span className="text-base font-medium mb-2 text-amber-700">Hens</span>
-              <div className="flex flex-col items-center gap-2 mb-2">
-                <div className="text-2xl font-bold text-amber-700">{counts.hen}</div>
+            <div 
+              className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg bg-white border border-gray-100"
+              style={{
+                boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 12px"
+              }}
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full bg-gray-400 transform translate-x-8 -translate-y-8"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 opacity-5 rounded-full bg-gray-400 transform -translate-x-5 translate-y-5"></div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-1">Hens</h3>
+              <div className="mt-3 mb-4">
+                <div className="text-4xl font-extrabold text-gray-900">{counts.hen}</div>
               </div>
               <Button 
                 variant="outline" 
-                size="icon" 
-                className="mt-2" 
+                className="mt-2 w-full hover:bg-gray-50 text-gray-700" 
                 onClick={() => openEditDialog('hen')}
-                title="Update hen count"
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-4 w-4 mr-2" /> Update
               </Button>
             </div>
             
             {/* Cocks */}
-            <div className="flex flex-col items-center p-4 bg-red-50 rounded-lg shadow-sm hover:shadow transition-shadow duration-200">
-              <div className="bg-red-100 p-2 rounded-full mb-2">
-                <Bird className="h-8 w-8 text-red-500" />
-              </div>
-              <span className="text-base font-medium mb-2 text-red-700">Cocks</span>
-              <div className="flex flex-col items-center gap-2 mb-2">
-                <div className="text-2xl font-bold text-red-700">{counts.cock}</div>
+            <div 
+              className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg bg-white border border-gray-100"
+              style={{
+                boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 12px"
+              }}
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full bg-gray-400 transform translate-x-8 -translate-y-8"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 opacity-5 rounded-full bg-gray-400 transform -translate-x-5 translate-y-5"></div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-1">Cocks</h3>
+              <div className="mt-3 mb-4">
+                <div className="text-4xl font-extrabold text-gray-900">{counts.cock}</div>
               </div>
               <Button 
                 variant="outline" 
-                size="icon" 
-                className="mt-2" 
+                className="mt-2 w-full hover:bg-gray-50 text-gray-700" 
                 onClick={() => openEditDialog('cock')}
-                title="Update cock count"
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-4 w-4 mr-2" /> Update
               </Button>
             </div>
             
             {/* Chicks */}
-            <div className="flex flex-col items-center p-4 bg-purple-50 rounded-lg shadow-sm hover:shadow transition-shadow duration-200">
-              <div className="bg-purple-100 p-2 rounded-full mb-2">
-                <Bird className="h-8 w-8 text-purple-500" />
-              </div>
-              <span className="text-base font-medium mb-2 text-purple-700">Chicks</span>
-              <div className="flex flex-col items-center gap-2 mb-2">
-                <div className="text-2xl font-bold text-purple-700">{counts.chicks}</div>
+            <div 
+              className="relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg bg-white border border-gray-100"
+              style={{
+                boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 12px"
+              }}
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full bg-gray-400 transform translate-x-8 -translate-y-8"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 opacity-5 rounded-full bg-gray-400 transform -translate-x-5 translate-y-5"></div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-1">Chicks</h3>
+              <div className="mt-3 mb-4">
+                <div className="text-4xl font-extrabold text-gray-900">{counts.chicks}</div>
               </div>
               <Button 
                 variant="outline" 
-                size="icon" 
-                className="mt-2" 
+                className="mt-2 w-full hover:bg-gray-50 text-gray-700" 
                 onClick={() => openEditDialog('chicks')}
-                title="Update chicks count"
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-4 w-4 mr-2" /> Update
               </Button>
             </div>
           </div>
