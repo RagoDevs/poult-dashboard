@@ -1,50 +1,48 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/hooks/use-toast'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Signup() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const { signup, loading } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    
+    if (!name || !email || !password || !confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive',
-      })
-      return
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
+      return;
     }
     
-    setIsLoading(true)
-
-    try {
-      // Mock signup - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      toast({
-        title: 'Success',
-        description: 'Account created successfully!',
-      })
-      // Redirect or update auth state here
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create account. Please try again.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
+    const success = await signup(name, email, password);
+    if (success) {
+      // Redirect to login page after successful signup
+      navigate('/login');
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -88,8 +86,8 @@ export default function Signup() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Sign up'}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create account'}
             </Button>
           </form>
         </CardContent>

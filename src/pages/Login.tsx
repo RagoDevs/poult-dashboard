@@ -1,39 +1,40 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/hooks/use-toast'
+import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login, loading } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if user was redirected from another page
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      // Mock login - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+    e.preventDefault();
+    
+    if (!email || !password) {
       toast({
-        title: 'Success',
-        description: 'You have successfully logged in!',
-      })
-      // Redirect or update auth state here
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to login. Please try again.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
     }
-  }
+    
+    const success = await login(email, password);
+    if (success) {
+      navigate(from, { replace: true });
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -75,8 +76,8 @@ export default function Login() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Logging in...' : 'Log in'}
             </Button>
           </form>
         </CardContent>

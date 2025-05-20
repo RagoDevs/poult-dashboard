@@ -1,54 +1,59 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const { requestPasswordReset, loading } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      // Mock API call - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setSubmitted(true)
+    
+    if (!email) {
       toast({
-        title: 'Success',
-        description: 'If an account exists with this email, you will receive a reset link.',
+        title: "Error",
+        description: "Please enter your email address.",
+        variant: "destructive",
       })
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
+      return
+    }
+    
+    const success = await requestPasswordReset(email)
+    if (success) {
+      setIsSubmitted(true)
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Forgot Password</CardTitle>
-          <CardDescription>
-            {!submitted
-              ? "Enter your email and we'll send you a link to reset your password"
-              : "Check your email for a link to reset your password"}
-          </CardDescription>
+        <CardHeader>
+          <CardTitle>Reset Password</CardTitle>
+          <CardDescription>Enter your email to receive a password reset link</CardDescription>
         </CardHeader>
-        <CardContent>
-          {!submitted ? (
+        {isSubmitted ? (
+          <CardContent className="text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <p>Check your email for a link to reset your password.</p>
+              <Button asChild variant="outline">
+                <Link to="/login">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to login
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        ) : (
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -61,26 +66,12 @@ export default function ForgotPassword() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send reset link'}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Sending...' : 'Send reset link'}
               </Button>
             </form>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-center text-sm text-muted-foreground">
-                We've sent an email to <strong>{email}</strong> with a link to reset your password.
-                Please check your inbox and spam folder.
-              </p>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setSubmitted(false)}
-              >
-                Try another email
-              </Button>
-            </div>
-          )}
-        </CardContent>
+          </CardContent>
+        )}
         <CardFooter>
           <div className="text-sm text-center w-full">
             <Link to="/login" className="inline-flex items-center text-primary hover:underline">
