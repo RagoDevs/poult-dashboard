@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Package, ArrowUp, ArrowDown } from "lucide-react";
 import { Transaction } from "@/pages/Index";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
@@ -35,55 +36,51 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
     .filter(transaction => transaction.type === 'income' && transaction.category === 'chicken')
     .reduce((total, transaction) => total + (transaction.quantity || 0), 0);
 
-  return (
-    <>
-      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
-          <CardTitle className="text-sm sm:text-base font-medium">Total Profit</CardTitle>
-          <div className="bg-gray-100 p-2 rounded-full">
-            {profit >= 0 ? 
-              <ArrowUp className="h-5 w-5 text-green-500" /> : 
-              <ArrowDown className="h-5 w-5 text-red-500" />
-            }
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className={`text-xl sm:text-3xl font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {formatCurrency(profit)}
-          </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Income minus expenses</p>
-        </CardContent>
-      </Card>
+  // Calculate financial values
 
-      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
-          <CardTitle className="text-sm sm:text-base font-medium">Total Income</CardTitle>
-          <div className="bg-green-50 p-2 rounded-full">
-            <DollarSign className="h-5 w-5 text-green-500" />
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="text-xl sm:text-3xl font-bold text-green-500">{formatCurrency(totalIncome)}</div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            All sales and income
-          </p>
-        </CardContent>
-      </Card>
+  // Instead of rendering a fragment with multiple cards, we need to render a single div
+  // This ensures the parent grid layout properly handles all three cards
+  return [
+    <Card key="profit" className="border hover:shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+        <div>
+          {profit >= 0 ? 
+            <ArrowUp className="h-4 w-4 text-gray-500" /> : 
+            <ArrowDown className="h-4 w-4 text-gray-500" />
+          }
+        </div>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <div className="text-2xl font-bold">{formatCurrency(profit)}</div>
+        <p className="text-xs text-gray-500 mt-1">Income minus expenses</p>
+      </CardContent>
+    </Card>,
 
-      <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
-          <CardTitle className="text-sm sm:text-base font-medium">Total Expenses</CardTitle>
-          <div className="bg-red-50 p-2 rounded-full">
-            <Package className="h-5 w-5 text-red-500" />
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="text-xl sm:text-3xl font-bold text-red-500">{formatCurrency(totalExpenses)}</div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            All expenses
-          </p>
-        </CardContent>
-      </Card>
-    </>
-  );
+    <Card key="income" className="border hover:shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+        <div>
+          <DollarSign className="h-4 w-4 text-gray-500" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <div className="text-2xl font-bold">{formatCurrency(totalIncome)}</div>
+        <p className="text-xs text-gray-500 mt-1">All sales and income</p>
+      </CardContent>
+    </Card>,
+
+    <Card key="expenses" className="border hover:shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+        <div>
+          <Package className="h-4 w-4 text-gray-500" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
+        <p className="text-xs text-gray-500 mt-1">All expenses</p>
+      </CardContent>
+    </Card>
+  ];
 }
