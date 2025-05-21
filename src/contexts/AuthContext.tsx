@@ -7,6 +7,7 @@ interface User {
   name?: string;
   email: string;
   token?: string;
+  expiry?: number;
 }
 
 interface AuthContextType {
@@ -37,12 +38,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Check for stored auth on mount
+  // Check for stored auth on mount and validate token expiration
   useEffect(() => {
     const storedUser = localStorage.getItem('kuku_user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Check if token has expired
+        if (parsedUser.expiry && parsedUser.expiry * 1000 < Date.now()) {
+          // Token has expired, log user out
+          console.log('Token expired, logging out');
+          localStorage.removeItem('kuku_user');
+          setUser(null);
+        } else {
+          setUser(parsedUser);
+        }
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem('kuku_user');
@@ -50,6 +61,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setLoading(false);
   }, []);
+  
+  // Periodically check token expiration
+  useEffect(() => {
+    if (!user || !user.expiry) return;
+    
+    const checkTokenExpiration = () => {
+      if (user.expiry && user.expiry * 1000 < Date.now()) {
+        // Token has expired, log user out
+        toast({ 
+          title: 'Session expired', 
+          description: 'Your session has expired. Please log in again.',
+          variant: 'destructive'
+        });
+        logout();
+      }
+    };
+    
+    // Check every minute
+    const interval = setInterval(checkTokenExpiration, 60000);
+    
+    // Initial check
+    checkTokenExpiration();
+    
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleApiError = (error: any): string => {
     if (error.response && error.response.data && error.response.data.message) {
@@ -77,8 +113,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await response.json();
       const userData = {
         email,
+        name: data.name,
         token: data.token,
-        // Add other user data as needed
+        expiry: data.expiry
       };
       
       setUser(userData);
