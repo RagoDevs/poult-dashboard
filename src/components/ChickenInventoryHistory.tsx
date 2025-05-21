@@ -1,47 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { format } from 'date-fns';
-
-type InventoryChangeReason = 'purchase' | 'sale' | 'birth' | 'death' | 'gift' | 'other';
-
-type InventoryHistoryEntry = {
-  date: string;
-  type: 'hen' | 'cock' | 'chicks';
-  previousValue: number;
-  newValue: number;
-  change: number;
-  reason: InventoryChangeReason;
-  notes: string;
-};
+import { useChickenInventory, ChickenType, ChickenHistoryEntry } from "@/hooks/use-chicken-inventory";
+import { RefreshCcw } from "lucide-react";
 
 export function ChickenInventoryHistory() {
+  const { history, historyLoading, historyError, fetchChickenHistory } = useChickenInventory();
+  
   const [filter, setFilter] = useState<{
-    type: 'all' | 'hen' | 'cock' | 'chicks';
-    reason: 'all' | InventoryChangeReason;
+    type: 'all' | ChickenType;
+    reason: 'all' | string;
   }>({ type: 'all', reason: 'all' });
 
-  // Load history from localStorage
-  const inventoryHistory: InventoryHistoryEntry[] = JSON.parse(
-    localStorage.getItem('chickenInventoryHistory') || '[]'
-  );
+  // Fetch history when component mounts or filter changes
+  useEffect(() => {
+    const fetchHistory = async () => {
+      // Only pass type and reason to API if they're not 'all'
+      const typeParam = filter.type !== 'all' ? filter.type : undefined;
+      const reasonParam = filter.reason !== 'all' ? filter.reason : undefined;
+      await fetchChickenHistory(typeParam, reasonParam);
+    };
+    
+    fetchHistory();
+    // Don't include fetchChickenHistory in dependencies to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter.type, filter.reason]);
   
-  // Filter history based on selected filters
-  const sortedHistory = [...inventoryHistory].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
-  
-  const filteredHistory = sortedHistory.filter(entry => {
-    if (filter.type !== 'all' && entry.type !== filter.type) return false;
-    if (filter.reason !== 'all' && entry.reason !== filter.reason) return false;
-    return true;
+  // Sort history by date (newest first)
+  const sortedHistory = [...history].sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
   
   // Helper function to get badge class for displaying reason
-  const getReasonBadgeClass = (reason: InventoryChangeReason): string => {
+  const getReasonBadgeClass = (reason: string): string => {
     return 'bg-gray-100 text-gray-700 py-1 px-2 rounded text-xs font-medium';
   };
   
@@ -51,7 +46,7 @@ export function ChickenInventoryHistory() {
   };
   
   // Helper function to format chicken type for display
-  const formatChickenType = (type: 'hen' | 'cock' | 'chicks'): string => {
+  const formatChickenType = (type: ChickenType): string => {
     switch (type) {
       case 'hen': return 'Hen';
       case 'cock': return 'Cock';
@@ -93,7 +88,7 @@ export function ChickenInventoryHistory() {
             <Label htmlFor="reason-filter" className="text-sm font-medium text-gray-700">Filter by Reason</Label>
             <Select
               value={filter.reason}
-              onValueChange={(value: 'all' | InventoryChangeReason) => 
+              onValueChange={(value: 'all' | string) => 
                 setFilter({...filter, reason: value})
               }
             >
@@ -113,8 +108,22 @@ export function ChickenInventoryHistory() {
           </div>
         </div>
         
+        {/* Refresh Button */}
+        <div className="flex justify-end mb-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => fetchChickenHistory(filter.type !== 'all' ? filter.type as ChickenType : undefined, filter.reason !== 'all' ? filter.reason : undefined)} 
+            disabled={historyLoading}
+            className="text-gray-700"
+          >
+            <RefreshCcw className={`h-4 w-4 mr-1 ${historyLoading ? 'animate-spin' : ''}`} />
+            {historyLoading ? 'Loading...' : 'Refresh'}
+          </Button>
+        </div>
+        
         {/* History Table */}
-        {filteredHistory.length > 0 ? (
+        {sortedHistory.length > 0 ? (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <Table>
               <TableHeader className="bg-gray-50">
@@ -126,20 +135,17 @@ export function ChickenInventoryHistory() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredHistory.map((entry, index) => (
-                  <TableRow key={index} className="hover:bg-gray-50 border-t border-gray-100">
+                {sortedHistory.map((entry, index) => (
+                  <TableRow key={entry.id || index} className="hover:bg-gray-50 border-t border-gray-100">
                     <TableCell className="font-medium text-gray-700">
-                      {format(new Date(entry.date), 'MMM d, yyyy h:mm a')}
+                      {format(new Date(entry.created_at), 'MMM d, yyyy h:mm a')}
                     </TableCell>
                     <TableCell className={getTypeIndicatorClass()}>
-                      {formatChickenType(entry.type)}
+                      {formatChickenType(entry.chicken_type)}
                     </TableCell>
                     <TableCell>
-                      <span className={entry.change > 0 ? 'text-gray-900 font-medium' : 'text-gray-900 font-medium'}>
-                        {entry.change > 0 ? '+' : ''}{entry.change}
-                      </span>
-                      <span className="text-gray-500 text-xs ml-1">
-                        ({entry.previousValue} → {entry.newValue})
+                      <span className={entry.quantity_change > 0 ? 'text-gray-900 font-medium' : 'text-gray-900 font-medium'}>
+                        {entry.quantity_change > 0 ? '+' : ''}{entry.quantity_change}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -154,11 +160,19 @@ export function ChickenInventoryHistory() {
           </div>
         ) : (
           <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">
-            <p className="text-gray-500 mb-2">
-              No history records found{filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
-            </p>
-            {(filter.type !== 'all' || filter.reason !== 'all') && (
-              <p className="text-sm text-gray-400">Try adjusting your filters</p>
+            {historyLoading ? (
+              <p className="text-gray-500 mb-2">Loading chicken history...</p>
+            ) : historyError ? (
+              <p className="text-red-500 mb-2">Error: {historyError}</p>
+            ) : (
+              <>
+                <p className="text-gray-500 mb-2">
+                  No history records found{filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
+                </p>
+                {(filter.type !== 'all' || filter.reason !== 'all') && (
+                  <p className="text-sm text-gray-400">Try adjusting your filters</p>
+                )}
+              </>
             )}
           </div>
         )}
