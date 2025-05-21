@@ -1,16 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, Check, X, Plus, Minus } from "lucide-react";
+import { Edit, Check, X, Plus, Minus, RefreshCcw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { useChickenInventory, ChickenType, ChickenCounts } from "@/hooks/use-chicken-inventory";
 
-// Define reason types for inventory changes
-type InventoryChangeReason = 'purchase' | 'sale' | 'birth' | 'death' | 'gift' | 'other';
-type ChickenType = 'hen' | 'cock' | 'chicks';
+type InventoryChangeReason = 'birth' | 'death' | 'gift' | 'other';
 
 type InventoryHistoryEntry = {
   date: string;
@@ -23,11 +21,6 @@ type InventoryHistoryEntry = {
 };
 
 interface ChickenInventoryProps {
-  externalCounts?: {
-    hen: number;
-    cock: number;
-    chicks: number;
-  };
   onInventoryChange?: (newCounts: {
     hen: number;
     cock: number;
@@ -35,196 +28,104 @@ interface ChickenInventoryProps {
   }) => void;
 }
 
-export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenInventoryProps = {}) {
-  // State for edit dialog
+export function ChickenInventory({ onInventoryChange }: ChickenInventoryProps = {}) {
+  const { counts: apiCounts, loading, error, fetchChickenInventory, updateChickenInventory } = useChickenInventory();
   const [editDialog, setEditDialog] = useState({
     isOpen: false,
     type: '' as ChickenType,
     currentValue: 0,
     newValue: 0,
-    reason: '' as InventoryChangeReason,
-    notes: ''
+    reason: '' as InventoryChangeReason
   });
   
-  // State for counts - use external counts if provided, otherwise use localStorage
-  const [counts, setCountsInternal] = useState(() => {
-    // If external counts are provided, use them
-    if (externalCounts) {
-      return externalCounts;
-    }
-    
-    // Otherwise, load from localStorage
-    const savedCounts = localStorage.getItem('chickenCounts');
-    return savedCounts ? JSON.parse(savedCounts) : {
-      hen: 0,
-      cock: 0,
-      chicks: 0
-    };
-  });
+  const totalCount = apiCounts?.hen + apiCounts?.cock + apiCounts?.chicks || 0;
   
-  // Update local state when external counts change
-  useEffect(() => {
-    if (externalCounts) {
-      setCountsInternal(externalCounts);
-    }
-  }, [externalCounts]);
-  
-  // Wrapper for setCounts that also calls the onInventoryChange callback
-  const setCounts = (newCounts: typeof counts) => {
-    setCountsInternal(newCounts);
+  const handleInventoryChange = async (type: ChickenType, newValue: number, reason: InventoryChangeReason = 'other') => {
+    // Always update via API first
+    await updateChickenInventory(type, newValue, reason);
     
-    // If onInventoryChange callback is provided, call it
+    // Then notify parent component if callback is provided
     if (onInventoryChange) {
-      onInventoryChange(newCounts);
+      onInventoryChange({...apiCounts, [type]: newValue});
     }
   };
 
-  // Initialize inventory history
-  const [inventoryHistory, setInventoryHistory] = useState(() => {
-    const savedHistory = localStorage.getItem('chickenInventoryHistory');
-    return savedHistory ? JSON.parse(savedHistory) : [];
-  });
-
-  // Calculate total count
-  const totalCount = counts.hen + counts.cock + counts.chicks;
-  
-  // Function to open edit dialog
   const openEditDialog = (type: ChickenType) => {
     setEditDialog({
       isOpen: true,
       type,
-      currentValue: counts[type],
-      newValue: counts[type],
-      reason: '' as InventoryChangeReason,
-      notes: ''
+      currentValue: apiCounts?.[type] || 0,
+      newValue: apiCounts?.[type] || 0,
+      reason: '' as InventoryChangeReason
     });
   };
   
-  // Function to close edit dialog
   const closeEditDialog = () => {
-    setEditDialog({
-      ...editDialog,
-      isOpen: false
-    });
+    setEditDialog({...editDialog, isOpen: false});
   };
   
-  // Function to handle value change in the dialog
   const handleValueChange = (value: string) => {
-    const numValue = parseInt(value) || 0;
-    const newValue = Math.max(0, numValue); // Prevent negative counts
-    
-    setEditDialog({
-      ...editDialog,
-      newValue
-    });
+    const newValue = Math.max(0, parseInt(value) || 0);
+    setEditDialog({...editDialog, newValue});
   };
   
-  // Function to apply confirmed value change
-  const applyValueChange = () => {
+  const applyValueChange = async () => {
     if (!editDialog.reason) return;
     
-    const { type, currentValue, newValue, reason, notes } = editDialog;
+    const { type, currentValue, newValue, reason } = editDialog;
     
-    // Only proceed if there's an actual change
     if (newValue === currentValue) {
       closeEditDialog();
       return;
     }
-    
-    // Create a history entry
     const historyEntry: InventoryHistoryEntry = {
       date: new Date().toISOString(),
       type,
       previousValue: currentValue,
-      newValue: Math.max(0, newValue),
-      change: Math.max(0, newValue) - currentValue,
+      newValue,
+      change: newValue - currentValue,
       reason,
-      notes
+      notes: ''
     };
     
-    // Update inventory history
-    const updatedHistory = [...inventoryHistory, historyEntry];
-    setInventoryHistory(updatedHistory);
-    localStorage.setItem('chickenInventoryHistory', JSON.stringify(updatedHistory));
-    
-    // Update counts
-    const newCounts = {
-      ...counts,
-      [type]: Math.max(0, newValue) // Prevent negative counts
-    };
-    
-    setCounts(newCounts);
-    localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
-    
-    // Close the dialog
+    try {
+      await handleInventoryChange(type, newValue, reason);
+    } catch (error) {
+      console.error('Failed to update chicken inventory:', error);
+    }
     closeEditDialog();
   };
 
   return (
     <>
-      {/* Edit Dialog with Reason Selection */}
-      <Dialog open={editDialog.isOpen} onOpenChange={closeEditDialog}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={editDialog.isOpen} onOpenChange={(open) => !open && closeEditDialog()}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5 text-blue-500" />
-              Update {editDialog.type ? editDialog.type.charAt(0).toUpperCase() + editDialog.type.slice(1) : ''} Count
-            </DialogTitle>
-            <DialogDescription>
-              Enter the new count and provide a reason for the change.
-            </DialogDescription>
+            <DialogTitle>Update {editDialog.type.charAt(0).toUpperCase() + editDialog.type.slice(1)} Count</DialogTitle>
+            <DialogDescription>Change the number of {editDialog.type} in your inventory.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-count">New Count</Label>
-              <div className="flex items-center space-x-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => handleValueChange((editDialog.newValue - 1).toString())}
-                  disabled={editDialog.newValue <= 0}
-                >
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="current-value" className="text-right">Current</Label>
+              <Input id="current-value" value={editDialog.currentValue} className="col-span-3" disabled />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-value" className="text-right">New Value</Label>
+              <div className="flex items-center col-span-3">
+                <Button type="button" variant="outline" size="icon" onClick={() => handleValueChange(Math.max(0, editDialog.newValue - 1).toString())}>
                   <Minus className="h-4 w-4" />
                 </Button>
-                <Input
-                  id="new-count"
-                  type="number"
-                  value={editDialog.newValue}
-                  onChange={(e) => handleValueChange(e.target.value)}
-                  className="text-center"
-                  min="0"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => handleValueChange((editDialog.newValue + 1).toString())}
-                >
+                <Input id="new-value" type="number" value={editDialog.newValue} onChange={(e) => handleValueChange(e.target.value)} className="text-center" min="0" />
+                <Button type="button" variant="outline" size="icon" onClick={() => handleValueChange((editDialog.newValue + 1).toString())}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              {editDialog.currentValue !== editDialog.newValue && (
-                <p className="text-sm text-gray-500">
-                  {editDialog.newValue > editDialog.currentValue ? 'Increase' : 'Decrease'} by: {Math.abs(editDialog.newValue - editDialog.currentValue)}
-                </p>
-              )}
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="change-reason">Reason for change</Label>
-              <Select 
-                value={editDialog.reason} 
-                onValueChange={(value: InventoryChangeReason) => 
-                  setEditDialog({...editDialog, reason: value})
-                }
-              >
-                <SelectTrigger id="change-reason">
-                  <SelectValue placeholder="Select reason" />
-                </SelectTrigger>
+              <Label htmlFor="change-reason">Reason for Change</Label>
+              <Select value={editDialog.reason} onValueChange={(value) => setEditDialog({...editDialog, reason: value as InventoryChangeReason})}>
+                <SelectTrigger id="change-reason"><SelectValue placeholder="Select a reason" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="purchase">Purchase</SelectItem>
-                  <SelectItem value="sale">Sale</SelectItem>
                   <SelectItem value="birth">Birth</SelectItem>
                   <SelectItem value="death">Death</SelectItem>
                   <SelectItem value="gift">Gift</SelectItem>
@@ -232,29 +133,11 @@ export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenI
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="change-notes">Notes (optional)</Label>
-              <Input
-                id="change-notes"
-                value={editDialog.notes}
-                onChange={(e) => setEditDialog({...editDialog, notes: e.target.value})}
-                placeholder="Additional details about this change"
-              />
-            </div>
+
           </div>
-          <DialogFooter className="flex justify-between sm:justify-between">
-            <Button variant="outline" onClick={closeEditDialog}>
-              <X className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            <Button 
-              onClick={applyValueChange}
-              disabled={!editDialog.reason || editDialog.currentValue === editDialog.newValue}
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Save Change
-            </Button>
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={closeEditDialog}><X className="mr-2 h-4 w-4" />Cancel</Button>
+            <Button onClick={applyValueChange} disabled={!editDialog.reason || editDialog.currentValue === editDialog.newValue}><Check className="mr-2 h-4 w-4" />Save Change</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -266,32 +149,28 @@ export function ChickenInventory({ externalCounts, onInventoryChange }: ChickenI
             <div className="text-xl font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">{totalCount}</div>
           </div>
           
+          <div className="flex justify-between items-center mb-4">
+            {error && <div className="text-red-500 text-sm">Error loading chicken inventory: {error}</div>}
+            <Button variant="outline" size="sm" onClick={() => fetchChickenInventory()} disabled={loading} className="ml-auto text-gray-700">
+              <RefreshCcw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Loading...' : 'Refresh'}
+            </Button>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Chicken Inventory Cards */}
             {[
-              { type: 'hen', label: 'Hens', count: counts.hen },
-              { type: 'cock', label: 'Cocks', count: counts.cock },
-              { type: 'chicks', label: 'Chicks', count: counts.chicks }
+              { type: 'hen', label: 'Hens', count: apiCounts?.hen },
+              { type: 'cock', label: 'Cocks', count: apiCounts?.cock },
+              { type: 'chicks', label: 'Chicks', count: apiCounts?.chicks }
             ].map((item) => (
-              <div 
-                key={item.type}
-                className="border border-gray-200 rounded-lg bg-white overflow-hidden hover:shadow-sm transition-shadow"
-              >
+              <div key={item.type} className="border border-gray-200 rounded-lg bg-white overflow-hidden hover:shadow-sm transition-shadow">
                 <div className="px-4 py-3">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-md font-medium text-gray-900">{item.label}</h3>
-                    </div>
-                    <div className="text-3xl font-bold text-gray-900 ml-2">{item.count}</div>
+                    <h3 className="text-md font-medium text-gray-900">{item.label}</h3>
+                    <div className="text-3xl font-bold text-gray-900 ml-2">{loading ? '...' : item.count}</div>
                   </div>
-                  
                   <div className="mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 text-xs py-1" 
-                      onClick={() => openEditDialog(item.type as ChickenType)}
-                    >
+                    <Button variant="outline" size="sm" className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 text-xs py-1" onClick={() => openEditDialog(item.type as ChickenType)} disabled={loading}>
                       <Edit className="h-3 w-3 mr-1" /> Update Count
                     </Button>
                   </div>

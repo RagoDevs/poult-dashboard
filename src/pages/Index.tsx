@@ -212,7 +212,6 @@ const Index = () => {
             <div className="rounded-xl overflow-hidden">
               {activeInventoryTab === 'current' ? (
                 <ChickenInventory 
-                  externalCounts={chickenCounts}
                   onInventoryChange={(newCounts) => {
                     setChickenCounts(newCounts);
                     localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
