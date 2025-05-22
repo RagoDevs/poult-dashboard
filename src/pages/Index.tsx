@@ -74,14 +74,6 @@ const Index = () => {
     fetchChickenHistory: hookFetchChickenHistory
   } = useChickenHistory();
 
-  // We're removing the useEffect that fetches chicken history when switching tabs
-  // because the ChickenInventoryHistory component handles its own data fetching
-
-  useEffect(() => {
-    if (hookChickenCounts) { // Ensure hookChickenCounts is initialized
-      localStorage.setItem('chickenCounts', JSON.stringify(hookChickenCounts));
-    }
-  }, [hookChickenCounts]);
 
   const loadTransactionsFromServer = useCallback(async () => {
     if (!user || !user.token) {
@@ -275,9 +267,14 @@ const Index = () => {
           updatePromises.push(hookUpdateChickenInventory(transaction.chickenType as HookChickenType, newQty, reason));
         }
 
+        // Wait for all chicken inventory updates to complete
+        // The updateChickenInventory function already refetches the inventory data
         await Promise.all(updatePromises);
-        await hookFetchChickenInventory(); // Refetch counts after all updates
-        await hookFetchChickenHistory();   // Refetch history
+        
+        // Only fetch history if we're on the history tab
+        if (activeInventoryTab === 'history') {
+          await hookFetchChickenHistory();
+        }
       }
 
       loadTransactionsFromServer(); // Refetch all transactions
