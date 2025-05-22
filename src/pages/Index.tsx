@@ -239,37 +239,11 @@ const Index = () => {
         id: crypto.randomUUID(),
       };
       
+      // Since the backend already handles chicken inventory updates when posting transactions,
+      // we only need to fetch the updated data once after the transaction is complete
       if (transaction.category === 'chicken') {
-        const isIncrease = transaction.type === 'expense';
-        const reason = isIncrease ? 'purchase' : 'sale';
-        const updatePromises: Promise<void>[] = [];
-
-        if (transaction.bulkQuantities) {
-          const { hen: henCount, cock: cockCount, chicks: chicksCount } = transaction.bulkQuantities;
-          if (henCount > 0) {
-            const current = hookChickenCounts.hen;
-            const newQty = isIncrease ? current + henCount : Math.max(0, current - henCount);
-            updatePromises.push(hookUpdateChickenInventory('hen' as HookChickenType, newQty, reason));
-          }
-          if (cockCount > 0) {
-            const current = hookChickenCounts.cock;
-            const newQty = isIncrease ? current + cockCount : Math.max(0, current - cockCount);
-            updatePromises.push(hookUpdateChickenInventory('cock' as HookChickenType, newQty, reason));
-          }
-          if (chicksCount > 0) {
-            const current = hookChickenCounts.chicks;
-            const newQty = isIncrease ? current + chicksCount : Math.max(0, current - chicksCount);
-            updatePromises.push(hookUpdateChickenInventory('chicks' as HookChickenType, newQty, reason));
-          }
-        } else if (transaction.chickenType && typeof transaction.quantity === 'number') {
-          const current = hookChickenCounts[transaction.chickenType as HookChickenType];
-          const newQty = isIncrease ? current + transaction.quantity : Math.max(0, current - transaction.quantity);
-          updatePromises.push(hookUpdateChickenInventory(transaction.chickenType as HookChickenType, newQty, reason));
-        }
-
-        // Wait for all chicken inventory updates to complete
-        // The updateChickenInventory function already refetches the inventory data
-        await Promise.all(updatePromises);
+        // Fetch the updated chicken inventory data
+        await hookFetchChickenInventory();
         
         // Only fetch history if we're on the history tab
         if (activeInventoryTab === 'history') {

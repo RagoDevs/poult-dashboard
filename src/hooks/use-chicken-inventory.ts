@@ -84,6 +84,7 @@ export function useChickenInventory() {
     }
     
     try {
+      // First fetch the current chicken data to get the correct IDs
       const response = await fetch(`${API_BASE_URL}/auth/chickens`, {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
@@ -105,6 +106,10 @@ export function useChickenInventory() {
       
       // Only send the update if there's an actual change
       if (quantityChange !== 0) {
+        // Update local state optimistically
+        setCounts(prev => ({ ...prev, [type]: newQuantity }));
+        
+        // Send the update to the server with the correct ID
         const updateResponse = await fetch(`${API_BASE_URL}/auth/chickens/${chickenToUpdate.id}`, {
           method: 'PUT',
           headers: {
@@ -115,21 +120,17 @@ export function useChickenInventory() {
         });
         
         if (!updateResponse.ok) {
+          // If update fails, revert the local state
+          setCounts(prev => ({ ...prev, [type]: currentQuantity }));
           throw new Error(`Failed to update chicken inventory: ${updateResponse.status}`);
         }
       }
-      
-      // Update local state with the new quantity
-      setCounts(prev => ({ ...prev, [type]: newQuantity }));
-      
-      // Refetch the inventory to ensure consistency
-      await fetchChickenInventory();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
-  }, [user?.token, API_BASE_URL]); // End of updateChickenInventory
+  }, [user?.token, API_BASE_URL]);
 
   const fetchChickenHistory = useCallback(async (type?: ChickenType, reason?: string) => {
     setHistoryLoading(true);
