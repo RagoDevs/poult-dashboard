@@ -86,9 +86,30 @@ const Index = () => {
           fetch(incomeUrl, { headers })
         ]);
 
+        const processApiResponse = (responseData: any): Transaction[] => {
+          let transactionsArray: any[] = [];
+          if (Array.isArray(responseData?.transactions)) {
+            transactionsArray = responseData.transactions;
+          } else if (Array.isArray(responseData)) {
+            transactionsArray = responseData;
+          }
+
+          return transactionsArray.map((tx: any) => ({
+            id: tx.id,
+            type: tx.type as TransactionType,
+            category: tx.category_name as ExpenseCategory,
+            amount: tx.amount,
+            date: tx.date.split('T')[0],
+            description: tx.description,
+            quantity: tx.quantity, // Will be undefined if not present
+            chickenType: tx.chickenType, // Will be undefined if not present
+          }));
+        };
+
         let fetchedExpenses: Transaction[] = [];
         if (expenseResponse.ok) {
-          fetchedExpenses = await expenseResponse.json();
+          const expenseData = await expenseResponse.json();
+          fetchedExpenses = processApiResponse(expenseData);
         } else {
           const errorData = await expenseResponse.json().catch(() => ({ message: 'Failed to fetch expenses and could not parse error response' }));
           console.error('Error fetching expenses:', expenseResponse.status, errorData);
@@ -101,7 +122,9 @@ const Index = () => {
 
         let fetchedIncome: Transaction[] = [];
         if (incomeResponse.ok) {
-          fetchedIncome = await incomeResponse.json();
+          const incomeData = await incomeResponse.json();
+          // The processApiResponse function is already defined from the expenses block
+          fetchedIncome = processApiResponse(incomeData);
         } else {
           const errorData = await incomeResponse.json().catch(() => ({ message: 'Failed to fetch income and could not parse error response' }));
           console.error('Error fetching income:', incomeResponse.status, errorData);
