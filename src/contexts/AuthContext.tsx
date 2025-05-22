@@ -62,31 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
   
-  // Periodically check token expiration
-  useEffect(() => {
-    if (!user || !user.expiry) return;
-    
-    const checkTokenExpiration = () => {
-      if (user.expiry && user.expiry * 1000 < Date.now()) {
-        // Token has expired, log user out
-        toast({ 
-          title: 'Session expired', 
-          description: 'Your session has expired. Please log in again.',
-          variant: 'destructive'
-        });
-        logout();
-      }
-    };
-    
-    // Check every minute
-    const interval = setInterval(checkTokenExpiration, 60000);
-    
-    // Initial check
-    checkTokenExpiration();
-    
-    return () => clearInterval(interval);
-  }, [user]);
-
   const handleApiError = (error: any): string => {
     if (error.response && error.response.data && error.response.data.message) {
       return error.response.data.message;
