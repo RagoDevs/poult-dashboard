@@ -122,8 +122,8 @@ export function useChickenInventory() {
       // Update local state with the new quantity
       setCounts(prev => ({ ...prev, [type]: newQuantity }));
       
-      // No need to fetch again if we've already calculated the new state
-      // await fetchChickenInventory();
+      // Refetch the inventory to ensure consistency
+      await fetchChickenInventory();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {

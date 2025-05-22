@@ -24,12 +24,17 @@ interface ChickenInventoryProps {
   counts: ChickenCounts;
   isLoading: boolean;
   error: string | null;
+  updateChickenInventory: (type: ChickenType, newQuantity: number, reason: InventoryChangeReason) => Promise<void>;
+  fetchChickenInventory: () => Promise<void>;
 }
 
-export function ChickenInventory({ counts: propCounts, isLoading: propIsLoading, error: propError }: ChickenInventoryProps) {
-  // Use the hook primarily for its action functions (update, fetch)
-  // Displayed data (counts, loading, error) will come from props.
-  const { fetchChickenInventory, updateChickenInventory } = useChickenInventory();
+export function ChickenInventory({
+  counts: propCounts,
+  isLoading: propIsLoading,
+  error: propError,
+  updateChickenInventory, // Now from props
+  fetchChickenInventory // Now from props
+}: ChickenInventoryProps) {
   const [editDialog, setEditDialog] = useState({
     isOpen: false,
     type: '' as ChickenType,
@@ -41,10 +46,8 @@ export function ChickenInventory({ counts: propCounts, isLoading: propIsLoading,
   const totalCount = propCounts?.hen + propCounts?.cock + propCounts?.chicks || 0;
   
   const handleInventoryChange = async (type: ChickenType, newValue: number, reason: InventoryChangeReason = 'other') => {
-    await updateChickenInventory(type, newValue, reason);
-    // After updating, Index.tsx will handle refetching counts and history via its own hook effects.
-    // We can also trigger a local refresh if desired, but Index.tsx should be the source of truth.
-    await fetchChickenInventory(); // Optionally, refresh immediately for responsiveness within this component
+    await updateChickenInventory(type, newValue, reason); // Call prop function
+    // The updateChickenInventory from the hook (passed from Index.tsx) already handles refetching.
   };
 
   const openEditDialog = (type: ChickenType) => {

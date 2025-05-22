@@ -355,6 +355,8 @@ const Index = () => {
                   counts={hookChickenCounts}
                   isLoading={hookInventoryLoading}
                   error={hookInventoryError}
+                  updateChickenInventory={hookUpdateChickenInventory} // Pass down the function
+                  fetchChickenInventory={hookFetchChickenInventory}   // Pass down the function
                 />
               ) : (
                 <ChickenInventoryHistory history={hookChickenHistory} isLoading={hookHistoryLoading} error={hookHistoryError} />
