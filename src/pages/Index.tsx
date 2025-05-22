@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { ChickenInventory } from "@/components/ChickenInventory";
 import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from '@/components/ui/use-toast';
+import { useChickenInventory, ChickenType as HookChickenType } from '@/hooks/use-chicken-inventory';
 
 export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
@@ -53,148 +53,122 @@ const Index = () => {
   const [activeInventoryTab, setActiveInventoryTab] = useState<'current' | 'history'>('current');
   const isMobile = useIsMobile();
   
-  // Load chicken counts from localStorage
   const { user, logout } = useAuth();
   const { toast } = useToast();
   
-  const [chickenCounts, setChickenCounts] = useState(() => {
-    const savedCounts = localStorage.getItem('chickenCounts');
-    return savedCounts ? JSON.parse(savedCounts) : {
-      hen: 0,
-      cock: 0,
-      chicks: 0
-    };
-  });
+  const {
+    counts: hookChickenCounts,
+    history: hookChickenHistory,
+    loading: hookInventoryLoading,
+    historyLoading: hookHistoryLoading,
+    error: hookInventoryError,
+    historyError: hookHistoryError,
+    fetchChickenInventory: hookFetchChickenInventory,
+    fetchChickenHistory: hookFetchChickenHistory,
+    updateChickenInventory: hookUpdateChickenInventory
+  } = useChickenInventory();
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!user || !user.token) {
-        setTransactions([]); // Clear transactions if no user/token
-        return;
-      }
+    if (activeInventoryTab === 'history' && user?.token) {
+      hookFetchChickenHistory();
+    }
+  }, [activeInventoryTab, user?.token, hookFetchChickenHistory]);
 
-      try {
-        const expenseUrl = 'http://localhost:5055/v1/auth/transactions/type/expense';
-        const incomeUrl = 'http://localhost:5055/v1/auth/transactions/type/income';
+  useEffect(() => {
+    if (hookChickenCounts) { // Ensure hookChickenCounts is initialized
+      localStorage.setItem('chickenCounts', JSON.stringify(hookChickenCounts));
+    }
+  }, [hookChickenCounts]);
 
-        const headers = {
-          'Authorization': `Bearer ${user.token}`,
-        };
+  const loadTransactionsFromServer = useCallback(async () => {
+    if (!user || !user.token) {
+      setTransactions([]); // Clear transactions if no user/token
+      return;
+    }
 
-        const [expenseResponse, incomeResponse] = await Promise.all([
-          fetch(expenseUrl, { headers }),
-          fetch(incomeUrl, { headers })
-        ]);
+    try {
+      const expenseUrl = 'http://localhost:5055/v1/auth/transactions/type/expense';
+      const incomeUrl = 'http://localhost:5055/v1/auth/transactions/type/income';
 
-        const processApiResponse = (responseData: any): Transaction[] => {
-          let transactionsArray: any[] = [];
-          if (Array.isArray(responseData?.transactions)) {
-            transactionsArray = responseData.transactions;
-          } else if (Array.isArray(responseData)) {
-            transactionsArray = responseData;
-          }
+      const headers = {
+        'Authorization': `Bearer ${user.token}`,
+      };
 
-          return transactionsArray.map((tx: any) => ({
-            id: tx.id,
-            type: tx.type as TransactionType,
-            category: tx.category_name as ExpenseCategory,
-            amount: tx.amount,
-            date: tx.date.split('T')[0],
-            description: tx.description,
-            quantity: tx.quantity, // Will be undefined if not present
-            chickenType: tx.chickenType, // Will be undefined if not present
-          }));
-        };
+      const [expenseResponse, incomeResponse] = await Promise.all([
+        fetch(expenseUrl, { headers }),
+        fetch(incomeUrl, { headers })
+      ]);
 
-        let fetchedExpenses: Transaction[] = [];
-        if (expenseResponse.ok) {
-          const expenseData = await expenseResponse.json();
-          fetchedExpenses = processApiResponse(expenseData);
-        } else {
-          const errorData = await expenseResponse.json().catch(() => ({ message: 'Failed to fetch expenses and could not parse error response' }));
-          console.error('Error fetching expenses:', expenseResponse.status, errorData);
-          toast({
-            title: 'Error Fetching Expenses',
-            description: errorData.message || `Server responded with status: ${expenseResponse.status}`,
-            variant: 'destructive',
-          });
+      const processApiResponse = (responseData: any): Transaction[] => {
+        let transactionsArray: any[] = [];
+        if (Array.isArray(responseData?.transactions)) {
+          transactionsArray = responseData.transactions;
+        } else if (Array.isArray(responseData)) {
+          transactionsArray = responseData;
         }
 
-        let fetchedIncome: Transaction[] = [];
-        if (incomeResponse.ok) {
-          const incomeData = await incomeResponse.json();
-          // The processApiResponse function is already defined from the expenses block
-          fetchedIncome = processApiResponse(incomeData);
-        } else {
-          const errorData = await incomeResponse.json().catch(() => ({ message: 'Failed to fetch income and could not parse error response' }));
-          console.error('Error fetching income:', incomeResponse.status, errorData);
-          toast({
-            title: 'Error Fetching Income',
-            description: errorData.message || `Server responded with status: ${incomeResponse.status}`,
-            variant: 'destructive',
-          });
-        }
-        
-        const allTransactions = [
-          ...(Array.isArray(fetchedExpenses) ? fetchedExpenses : []),
-          ...(Array.isArray(fetchedIncome) ? fetchedIncome : [])
-        ];
-        
-        setTransactions(allTransactions);
+        return transactionsArray.map((tx: any) => ({
+          id: tx.id,
+          type: tx.type as TransactionType,
+          category: tx.category_name as ExpenseCategory,
+          amount: tx.amount,
+          date: tx.date.split('T')[0],
+          description: tx.description,
+          quantity: tx.quantity, // Will be undefined if not present
+          chickenType: tx.chickenType, // Will be undefined if not present
+        }));
+      };
 
-      } catch (error: any) {
-        console.error('Failed to fetch transactions:', error);
+      let fetchedExpenses: Transaction[] = [];
+      if (expenseResponse.ok) {
+        const expenseData = await expenseResponse.json();
+        fetchedExpenses = processApiResponse(expenseData);
+      } else {
+        const errorData = await expenseResponse.json().catch(() => ({ message: 'Failed to fetch expenses and could not parse error response' }));
+        console.error('Error fetching expenses:', expenseResponse.status, errorData);
         toast({
-          title: 'Error Loading Transactions',
-          description: error.message || 'An unexpected error occurred while trying to load data.',
+          title: 'Error Fetching Expenses',
+          description: errorData.message || `Server responded with status: ${expenseResponse.status}`,
           variant: 'destructive',
         });
       }
-    };
 
-    fetchTransactions();
-  }, [user, toast, setTransactions]); // Added setTransactions to dependency array for completeness
+      let fetchedIncome: Transaction[] = [];
+      if (incomeResponse.ok) {
+        const incomeData = await incomeResponse.json();
+        fetchedIncome = processApiResponse(incomeData);
+      } else {
+        const errorData = await incomeResponse.json().catch(() => ({ message: 'Failed to fetch income and could not parse error response' }));
+        console.error('Error fetching income:', incomeResponse.status, errorData);
+        toast({
+          title: 'Error Fetching Income',
+          description: errorData.message || `Server responded with status: ${incomeResponse.status}`,
+          variant: 'destructive',
+        });
+      }
+      
+      const allTransactions = [
+        ...(Array.isArray(fetchedExpenses) ? fetchedExpenses : []),
+        ...(Array.isArray(fetchedIncome) ? fetchedIncome : [])
+      ];
+      
+      setTransactions(allTransactions);
 
-  // Function to update chicken inventory
-  const updateChickenInventory = (
-    chickenType: 'hen' | 'cock' | 'chicks', 
-    quantity: number, 
-    isIncrease: boolean,
-    reason: InventoryChangeReason,
-    description: string
-  ) => {
-    // Get current counts
-    const currentCount = chickenCounts[chickenType];
-    
-    // Calculate new count (increase or decrease)
-    const newCount = isIncrease ? currentCount + quantity : Math.max(0, currentCount - quantity);
-    
-    // Create history entry
-    const historyEntry: InventoryHistoryEntry = {
-      date: new Date().toISOString(),
-      type: chickenType,
-      previousValue: currentCount,
-      newValue: newCount,
-      change: isIncrease ? quantity : -quantity,
-      reason,
-      notes: description
-    };
-    
-    // Update inventory history in localStorage
-    const savedHistory = localStorage.getItem('chickenInventoryHistory');
-    const inventoryHistory = savedHistory ? JSON.parse(savedHistory) : [];
-    const updatedHistory = [...inventoryHistory, historyEntry];
-    localStorage.setItem('chickenInventoryHistory', JSON.stringify(updatedHistory));
-    
-    // Update counts
-    const newCounts = {
-      ...chickenCounts,
-      [chickenType]: newCount
-    };
-    
-    setChickenCounts(newCounts);
-    localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
-  };
+    } catch (error: any) {
+      console.error('Failed to fetch transactions:', error);
+      toast({
+        title: 'Error Loading Transactions',
+        description: error.message || 'An unexpected error occurred while trying to load data.',
+        variant: 'destructive',
+      });
+    }
+  }, [user, toast, setTransactions]);
+
+  useEffect(() => {
+    loadTransactionsFromServer();
+  }, [loadTransactionsFromServer]);
+
+  // Removed duplicate useEffect that was causing multiple fetches when switching to the history tab
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'> & { bulkQuantities?: { hen: number; cock: number; chicks: number } }) => {
     
@@ -270,42 +244,42 @@ const Index = () => {
         id: crypto.randomUUID(),
       };
       
-      // Handle bulk chicken transactions
-      if (transaction.category === 'chicken' && transaction.bulkQuantities) {
-        const { hen: henCount, cock: cockCount, chicks: chicksCount } = transaction.bulkQuantities;
-        const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
-        const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
-        
-        // Update inventory for each chicken type with quantity > 0
-        if (henCount > 0) {
-          updateChickenInventory('hen', henCount, isIncrease, reason, transaction.description);
+      if (transaction.category === 'chicken') {
+        const isIncrease = transaction.type === 'expense';
+        const reason = isIncrease ? 'purchase' : 'sale';
+        const updatePromises: Promise<void>[] = [];
+
+        if (transaction.bulkQuantities) {
+          const { hen: henCount, cock: cockCount, chicks: chicksCount } = transaction.bulkQuantities;
+          if (henCount > 0) {
+            const current = hookChickenCounts.hen;
+            const newQty = isIncrease ? current + henCount : Math.max(0, current - henCount);
+            updatePromises.push(hookUpdateChickenInventory('hen' as HookChickenType, newQty, reason));
+          }
+          if (cockCount > 0) {
+            const current = hookChickenCounts.cock;
+            const newQty = isIncrease ? current + cockCount : Math.max(0, current - cockCount);
+            updatePromises.push(hookUpdateChickenInventory('cock' as HookChickenType, newQty, reason));
+          }
+          if (chicksCount > 0) {
+            const current = hookChickenCounts.chicks;
+            const newQty = isIncrease ? current + chicksCount : Math.max(0, current - chicksCount);
+            updatePromises.push(hookUpdateChickenInventory('chicks' as HookChickenType, newQty, reason));
+          }
+        } else if (transaction.chickenType && typeof transaction.quantity === 'number') {
+          const current = hookChickenCounts[transaction.chickenType as HookChickenType];
+          const newQty = isIncrease ? current + transaction.quantity : Math.max(0, current - transaction.quantity);
+          updatePromises.push(hookUpdateChickenInventory(transaction.chickenType as HookChickenType, newQty, reason));
         }
-        
-        if (cockCount > 0) {
-          updateChickenInventory('cock', cockCount, isIncrease, reason, transaction.description);
-        }
-        
-        if (chicksCount > 0) {
-          updateChickenInventory('chicks', chicksCount, isIncrease, reason, transaction.description);
-        }
+
+        await Promise.all(updatePromises);
+        await hookFetchChickenInventory(); // Refetch counts after all updates
+        await hookFetchChickenHistory();   // Refetch history
       }
-      // Handle single chicken type transactions
-      else if (transaction.category === 'chicken' && transaction.chickenType && transaction.quantity) {
-        const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
-        const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
-        
-        updateChickenInventory(
-          transaction.chickenType,
-          transaction.quantity,
-          isIncrease,
-          reason,
-          transaction.description
-        );
-      }
-      
-      setTransactions([...transactions, newTransaction]);
+
+      loadTransactionsFromServer(); // Refetch all transactions
       setShowTransactionForm(false);
-      toast({ title: 'Success', description: 'Transaction added successfully' });
+      toast({ title: 'Success', description: 'Transaction added successfully and list updated.' });
     } catch (error: any) {
       toast({ 
         title: 'Error', 
@@ -378,13 +352,12 @@ const Index = () => {
             <div className="rounded-xl overflow-hidden">
               {activeInventoryTab === 'current' ? (
                 <ChickenInventory 
-                  onInventoryChange={(newCounts) => {
-                    setChickenCounts(newCounts);
-                    localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
-                  }}
+                  counts={hookChickenCounts}
+                  isLoading={hookInventoryLoading}
+                  error={hookInventoryError}
                 />
               ) : (
-                <ChickenInventoryHistory />
+                <ChickenInventoryHistory history={hookChickenHistory} isLoading={hookHistoryLoading} error={hookHistoryError} />
               )}
             </div>
           </div>

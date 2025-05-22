@@ -14,6 +14,15 @@ interface TransactionListProps {
 export function TransactionList({ transactions, type }: TransactionListProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const isMobile = useIsMobile();
+
+  const formatCategoryName = (category: string): string => {
+    if (!category) return '';
+    return category
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
   
   const getCategoryIcon = (category: string, type: TransactionType, chickenType?: string) => {
     // Use monochromatic icons (gray-600 for better visibility)
@@ -84,9 +93,9 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
             <TabsTrigger 
               key={category} 
               value={category} 
-              className="capitalize flex-1 text-xs sm:text-sm py-2 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+              className="flex-1 text-xs sm:text-sm py-2 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
             >
-              {category}
+              {formatCategoryName(category)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -127,8 +136,8 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
                     <div className="flex items-center justify-center bg-gray-100 rounded p-1.5 w-8 h-8">
                       {getCategoryIcon(transaction.category, transaction.type, transaction.chickenType)}
                     </div>
-                    <span className="capitalize font-medium text-gray-900">
-                      {transaction.category}
+                    <span className="font-medium text-gray-900">
+                      {formatCategoryName(transaction.category)}
                     </span>
                     {transaction.chickenType && (
                       <span className="text-xs text-gray-500 font-normal">

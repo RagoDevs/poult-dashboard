@@ -8,8 +8,19 @@ import { format } from 'date-fns';
 import { useChickenInventory, ChickenType, ChickenHistoryEntry } from "@/hooks/use-chicken-inventory";
 import { RefreshCcw } from "lucide-react";
 
-export function ChickenInventoryHistory() {
-  const { history, historyLoading, historyError, fetchChickenHistory } = useChickenInventory();
+interface ChickenInventoryHistoryProps {
+  history: ChickenHistoryEntry[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+export function ChickenInventoryHistory({ history: propHistory, isLoading: propIsLoading, error: propError }: ChickenInventoryHistoryProps) {
+  const {
+    history: internalHookHistory,
+    historyLoading: internalHookLoading,
+    historyError: internalHookError,
+    fetchChickenHistory
+  } = useChickenInventory();
   
   const [filter, setFilter] = useState<{
     type: 'all' | ChickenType;
@@ -30,8 +41,17 @@ export function ChickenInventoryHistory() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter.type, filter.reason]);
   
+  // Determine which history to display: propHistory (initial/full) or localFilteredHistory (if filters applied)
+  // For now, let's prioritize propHistory if available, otherwise localFilteredHistory if filters have been used.
+  // A more robust solution might involve combining or always using one source.
+  // Let's assume propHistory is the primary source and local filtering is client-side for now, or the hook's fetch is for specific filtered views.
+
+  // If internalHookHistory has items (meaning a filter fetch was done by this component), use it.
+  // Otherwise, use propHistory (passed from parent, representing initial full load or parent-driven updates).
+  const activeHistorySource = internalHookHistory && internalHookHistory.length > 0 ? internalHookHistory : propHistory;
+
   // Sort history by date (newest first)
-  const sortedHistory = [...history].sort((a, b) => {
+  const sortedHistory = [...(activeHistorySource || [])].sort((a, b) => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
   
@@ -114,16 +134,33 @@ export function ChickenInventoryHistory() {
             variant="outline" 
             size="sm" 
             onClick={() => fetchChickenHistory(filter.type !== 'all' ? filter.type as ChickenType : undefined, filter.reason !== 'all' ? filter.reason : undefined)} 
-            disabled={historyLoading}
+            disabled={internalHookLoading} // Use internal hook's loading state for its own actions
             className="text-gray-700"
           >
-            <RefreshCcw className={`h-4 w-4 mr-1 ${historyLoading ? 'animate-spin' : ''}`} />
-            {historyLoading ? 'Loading...' : 'Refresh'}
+            <RefreshCcw className={`h-4 w-4 mr-1 ${internalHookLoading ? 'animate-spin' : ''}`} />
+            {internalHookLoading ? 'Loading...' : 'Refresh'}
           </Button>
         </div>
         
         {/* History Table */}
-        {sortedHistory.length > 0 ? (
+        {/* Display error from props (initial load) or internal hook error */}
+        {(propError || internalHookError) && (
+          <div className="text-center py-4 text-red-500">
+            Error: {propError || internalHookError}
+          </div>
+        )}
+
+        {/* Display loading from props (initial load) or internal hook loading */}
+        {/* Show loading if propIsLoading (parent is loading) OR internalHookLoading (this component is loading via filter/refresh) */} 
+        {/* AND there's no data yet to display and no errors. */}
+        {(propIsLoading || internalHookLoading) && (!activeHistorySource || activeHistorySource.length === 0) && !(propError || internalHookError) && (
+           <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+            <p className="text-gray-500 mb-2">Loading chicken history...</p>
+          </div>
+        )}
+
+        {/* Show table if NOT loading (neither parent nor internal) AND there is data AND no errors */}
+        {!propIsLoading && !internalHookLoading && activeHistorySource && activeHistorySource.length > 0 && !(propError || internalHookError) ? (
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <Table>
               <TableHeader className="bg-gray-50">
@@ -159,22 +196,20 @@ export function ChickenInventoryHistory() {
             </Table>
           </div>
         ) : (
-          <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">
-            {historyLoading ? (
-              <p className="text-gray-500 mb-2">Loading chicken history...</p>
-            ) : historyError ? (
-              <p className="text-red-500 mb-2">Error: {historyError}</p>
-            ) : (
-              <>
-                <p className="text-gray-500 mb-2">
-                  No history records found{filter.type !== 'all' || filter.reason !== 'all' ? ' matching your filters' : ''}.
-                </p>
-                {(filter.type !== 'all' || filter.reason !== 'all') && (
-                  <p className="text-sm text-gray-400">Try adjusting your filters</p>
-                )}
-              </>
-            )}
-          </div>
+          // This block is for when NOT loading (neither parent nor internal), no errors, AND activeHistorySource is empty or null
+          !propIsLoading && !internalHookLoading && !(propError || internalHookError) && (!activeHistorySource || activeHistorySource.length === 0) && (
+            <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">
+              <p className="text-gray-500 mb-2">
+                No history records found{filter.type !== 'all' || filter.reason !== 'all' ? ' for the current filters' : ''}.
+              </p>
+              {(filter.type !== 'all' || filter.reason !== 'all') && (
+                <p className="text-sm text-gray-400">Try adjusting your filters or click Refresh.</p>
+              )}
+              {filter.type === 'all' && filter.reason === 'all' && (
+                 <p className="text-sm text-gray-400">Click Refresh to try loading again.</p>
+              )}
+            </div>
+          )
         )}
       </CardContent>
     </Card>

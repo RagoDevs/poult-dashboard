@@ -21,15 +21,15 @@ type InventoryHistoryEntry = {
 };
 
 interface ChickenInventoryProps {
-  onInventoryChange?: (newCounts: {
-    hen: number;
-    cock: number;
-    chicks: number;
-  }) => void;
+  counts: ChickenCounts;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export function ChickenInventory({ onInventoryChange }: ChickenInventoryProps = {}) {
-  const { counts: apiCounts, loading, error, fetchChickenInventory, updateChickenInventory } = useChickenInventory();
+export function ChickenInventory({ counts: propCounts, isLoading: propIsLoading, error: propError }: ChickenInventoryProps) {
+  // Use the hook primarily for its action functions (update, fetch)
+  // Displayed data (counts, loading, error) will come from props.
+  const { fetchChickenInventory, updateChickenInventory } = useChickenInventory();
   const [editDialog, setEditDialog] = useState({
     isOpen: false,
     type: '' as ChickenType,
@@ -38,24 +38,21 @@ export function ChickenInventory({ onInventoryChange }: ChickenInventoryProps = 
     reason: '' as InventoryChangeReason
   });
   
-  const totalCount = apiCounts?.hen + apiCounts?.cock + apiCounts?.chicks || 0;
+  const totalCount = propCounts?.hen + propCounts?.cock + propCounts?.chicks || 0;
   
   const handleInventoryChange = async (type: ChickenType, newValue: number, reason: InventoryChangeReason = 'other') => {
-    // Always update via API first
     await updateChickenInventory(type, newValue, reason);
-    
-    // Then notify parent component if callback is provided
-    if (onInventoryChange) {
-      onInventoryChange({...apiCounts, [type]: newValue});
-    }
+    // After updating, Index.tsx will handle refetching counts and history via its own hook effects.
+    // We can also trigger a local refresh if desired, but Index.tsx should be the source of truth.
+    await fetchChickenInventory(); // Optionally, refresh immediately for responsiveness within this component
   };
 
   const openEditDialog = (type: ChickenType) => {
     setEditDialog({
       isOpen: true,
       type,
-      currentValue: apiCounts?.[type] || 0,
-      newValue: apiCounts?.[type] || 0,
+      currentValue: propCounts?.[type] || 0,
+      newValue: propCounts?.[type] || 0,
       reason: '' as InventoryChangeReason
     });
   };
@@ -146,31 +143,31 @@ export function ChickenInventory({ onInventoryChange }: ChickenInventoryProps = 
         <CardContent className="p-4">
           <div className="border-b border-gray-200 pb-3 mb-4 flex items-center justify-between">
             <div className="text-sm font-medium text-gray-500">Total Chickens</div>
-            <div className="text-xl font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">{totalCount}</div>
+            <div className="text-xl font-bold text-gray-900 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">{propIsLoading ? '...' : totalCount}</div>
           </div>
           
           <div className="flex justify-between items-center mb-4">
-            {error && <div className="text-red-500 text-sm">Error loading chicken inventory: {error}</div>}
-            <Button variant="outline" size="sm" onClick={() => fetchChickenInventory()} disabled={loading} className="ml-auto text-gray-700">
-              <RefreshCcw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Loading...' : 'Refresh'}
+            {propError && <div className="text-red-500 text-sm">Error: {propError}</div>}
+            <Button variant="outline" size="sm" onClick={() => fetchChickenInventory()} disabled={propIsLoading} className="ml-auto text-gray-700">
+              <RefreshCcw className={`h-4 w-4 mr-1 ${propIsLoading ? 'animate-spin' : ''}`} />
+              {propIsLoading ? 'Loading...' : 'Refresh'}
             </Button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { type: 'hen', label: 'Hens', count: apiCounts?.hen },
-              { type: 'cock', label: 'Cocks', count: apiCounts?.cock },
-              { type: 'chicks', label: 'Chicks', count: apiCounts?.chicks }
+              { type: 'hen', label: 'Hens', count: propCounts?.hen },
+              { type: 'cock', label: 'Cocks', count: propCounts?.cock },
+              { type: 'chicks', label: 'Chicks', count: propCounts?.chicks }
             ].map((item) => (
               <div key={item.type} className="border border-gray-200 rounded-lg bg-white overflow-hidden hover:shadow-sm transition-shadow">
                 <div className="px-4 py-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-md font-medium text-gray-900">{item.label}</h3>
-                    <div className="text-3xl font-bold text-gray-900 ml-2">{loading ? '...' : item.count}</div>
+                    <div className="text-3xl font-bold text-gray-900 ml-2">{propIsLoading ? '...' : item.count ?? 0}</div>
                   </div>
                   <div className="mt-2">
-                    <Button variant="outline" size="sm" className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 text-xs py-1" onClick={() => openEditDialog(item.type as ChickenType)} disabled={loading}>
+                    <Button variant="outline" size="sm" className="w-full border-gray-200 hover:bg-gray-50 text-gray-700 text-xs py-1" onClick={() => openEditDialog(item.type as ChickenType)} disabled={propIsLoading}>
                       <Edit className="h-3 w-3 mr-1" /> Update Count
                     </Button>
                   </div>

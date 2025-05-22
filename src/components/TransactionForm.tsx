@@ -45,6 +45,12 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate description for expenses
+    if (type === 'expense' && !description.trim()) {
+      alert('Description is required for expenses.');
+      return;
+    }
     
     // For income, always set category to 'chicken' for chicken sales
     const finalCategory = isIncome ? 'chicken' : category;

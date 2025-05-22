@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type ChickenType = 'hen' | 'cock' | 'chicks';
@@ -35,7 +35,7 @@ export function useChickenInventory() {
   
   const API_BASE_URL = 'http://localhost:5055/v1';
   
-  const fetchChickenInventory = async () => {
+  const fetchChickenInventory = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -71,9 +71,9 @@ export function useChickenInventory() {
     } finally {
       setLoading(false);
     }
-  };
-  
-  const updateChickenInventory = async (type: ChickenType, newQuantity: number, reason: string = 'other') => {
+  }, [user?.token, API_BASE_URL]); // End of fetchChickenInventory
+
+  const updateChickenInventory = useCallback(async (type: ChickenType, newQuantity: number, reason: string = 'other') => {
     setLoading(true);
     setError(null);
     
@@ -129,9 +129,9 @@ export function useChickenInventory() {
     } finally {
       setLoading(false);
     }
-  };
-  
-  const fetchChickenHistory = async (type?: ChickenType, reason?: string) => {
+  }, [user?.token, API_BASE_URL]); // End of updateChickenInventory
+
+  const fetchChickenHistory = useCallback(async (type?: ChickenType, reason?: string) => {
     setHistoryLoading(true);
     setHistoryError(null);
     
@@ -174,13 +174,13 @@ export function useChickenInventory() {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [user?.token, API_BASE_URL]);
 
   useEffect(() => {
     if (user?.token) {
       fetchChickenInventory();
     }
-  }, [user]);
+  }, [user?.token, fetchChickenInventory]);
   
   return { 
     counts, 
