@@ -1,12 +1,9 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Apple, Pill, Wrench, Construction } from "lucide-react";
-import { ExpenseForm } from "@/components/ExpenseForm";
-import { ExpenseList } from "@/components/ExpenseList";
-import { ExpenseSummary } from "@/components/ExpenseSummary";
+import { Plus } from "lucide-react";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionSummary } from "@/components/TransactionSummary";
@@ -14,7 +11,7 @@ import { ChickenInventory } from "@/components/ChickenInventory";
 import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'other';
+export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
 
 export interface Expense {
