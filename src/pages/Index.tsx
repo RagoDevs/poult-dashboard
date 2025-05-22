@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { TransactionSummary } from "@/components/TransactionSummary";
 import { ChickenInventory } from "@/components/ChickenInventory";
 import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from '@/components/ui/use-toast';
 
 export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
@@ -53,7 +54,8 @@ const Index = () => {
   const isMobile = useIsMobile();
   
   // Load chicken counts from localStorage
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
   
   const [chickenCounts, setChickenCounts] = useState(() => {
     const savedCounts = localStorage.getItem('chickenCounts');
@@ -63,6 +65,72 @@ const Index = () => {
       chicks: 0
     };
   });
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!user || !user.token) {
+        setTransactions([]); // Clear transactions if no user/token
+        return;
+      }
+
+      try {
+        const expenseUrl = 'http://localhost:5055/v1/auth/transactions/type/expense';
+        const incomeUrl = 'http://localhost:5055/v1/auth/transactions/type/income';
+
+        const headers = {
+          'Authorization': `Bearer ${user.token}`,
+        };
+
+        const [expenseResponse, incomeResponse] = await Promise.all([
+          fetch(expenseUrl, { headers }),
+          fetch(incomeUrl, { headers })
+        ]);
+
+        let fetchedExpenses: Transaction[] = [];
+        if (expenseResponse.ok) {
+          fetchedExpenses = await expenseResponse.json();
+        } else {
+          const errorData = await expenseResponse.json().catch(() => ({ message: 'Failed to fetch expenses and could not parse error response' }));
+          console.error('Error fetching expenses:', expenseResponse.status, errorData);
+          toast({
+            title: 'Error Fetching Expenses',
+            description: errorData.message || `Server responded with status: ${expenseResponse.status}`,
+            variant: 'destructive',
+          });
+        }
+
+        let fetchedIncome: Transaction[] = [];
+        if (incomeResponse.ok) {
+          fetchedIncome = await incomeResponse.json();
+        } else {
+          const errorData = await incomeResponse.json().catch(() => ({ message: 'Failed to fetch income and could not parse error response' }));
+          console.error('Error fetching income:', incomeResponse.status, errorData);
+          toast({
+            title: 'Error Fetching Income',
+            description: errorData.message || `Server responded with status: ${incomeResponse.status}`,
+            variant: 'destructive',
+          });
+        }
+        
+        const allTransactions = [
+          ...(Array.isArray(fetchedExpenses) ? fetchedExpenses : []),
+          ...(Array.isArray(fetchedIncome) ? fetchedIncome : [])
+        ];
+        
+        setTransactions(allTransactions);
+
+      } catch (error: any) {
+        console.error('Failed to fetch transactions:', error);
+        toast({
+          title: 'Error Loading Transactions',
+          description: error.message || 'An unexpected error occurred while trying to load data.',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    fetchTransactions();
+  }, [user, toast, setTransactions]); // Added setTransactions to dependency array for completeness
 
   // Function to update chicken inventory
   const updateChickenInventory = (
@@ -105,51 +173,129 @@ const Index = () => {
     localStorage.setItem('chickenCounts', JSON.stringify(newCounts));
   };
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'> & { bulkQuantities?: { hen: number; cock: number; chicks: number } }) => {
-    const newTransaction = {
-      ...transaction,
-      id: crypto.randomUUID(),
+  const addTransaction = async (transaction: Omit<Transaction, 'id'> & { bulkQuantities?: { hen: number; cock: number; chicks: number } }) => {
+    
+    if (!user || !user.token) {
+      toast({ 
+        title: 'Authentication Error', 
+        description: 'You must be logged in to add transactions', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
+    // Define the base transaction interface for API payload
+    interface ApiTransactionBase {
+      type: TransactionType;
+      category: ExpenseCategory;
+      amount: number;
+      date: string;
+      description: string;
+      chickenType?: 'hen' | 'cock' | 'chicks';
+      quantity?: number;
+      bulkQuantities?: {
+        hen: number;
+        cock: number;
+        chicks: number;
+      };
+    }
+    
+    // Prepare transaction data for API - ensure only serializable data is included
+    const apiTransaction: ApiTransactionBase = {
+      type: transaction.type,
+      category: transaction.category,
+      amount: transaction.amount,
+      date: `${transaction.date}T00:00:00Z`, // Append time for Go backend
+      description: transaction.description
     };
     
-    // Handle bulk chicken transactions
-    if (transaction.category === 'chicken' && transaction.bulkQuantities) {
-      const { hen: henCount, cock: cockCount, chicks: chicksCount } = transaction.bulkQuantities;
-      const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
-      const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
-      
-      // Update inventory for each chicken type with quantity > 0
-      if (henCount > 0) {
-        updateChickenInventory('hen', henCount, isIncrease, reason, transaction.description);
+    // Add chicken-specific fields if applicable
+    if (transaction.category === 'chicken') {
+      if (transaction.bulkQuantities) {
+        apiTransaction.bulkQuantities = {
+          hen: transaction.bulkQuantities.hen || 0,
+          cock: transaction.bulkQuantities.cock || 0,
+          chicks: transaction.bulkQuantities.chicks || 0
+        };
+      } else if (transaction.chickenType && transaction.quantity) {
+        apiTransaction.chickenType = transaction.chickenType;
+        apiTransaction.quantity = transaction.quantity;
       }
-      
-      if (cockCount > 0) {
-        updateChickenInventory('cock', cockCount, isIncrease, reason, transaction.description);
-      }
-      
-      if (chicksCount > 0) {
-        updateChickenInventory('chicks', chicksCount, isIncrease, reason, transaction.description);
-      }
-    }
-    // Handle single chicken type transactions
-    else if (transaction.category === 'chicken' && transaction.chickenType && transaction.quantity) {
-      const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
-      const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
-      
-      updateChickenInventory(
-        transaction.chickenType,
-        transaction.quantity,
-        isIncrease,
-        reason,
-        transaction.description
-      );
     }
     
-    setTransactions([...transactions, newTransaction]);
-    setShowTransactionForm(false);
+    console.log('Sending transaction to API:', apiTransaction);
+    
+    try {
+      // Send transaction to API
+      const response = await fetch('http://localhost:5055/v1/auth/transactions', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(apiTransaction)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add transaction');
+      }
+      // Backend returns OK with nil body, so we don't parse JSON for success.
+      // Generate ID client-side.
+      const newTransaction = {
+        ...transaction,
+        id: crypto.randomUUID(),
+      };
+      
+      // Handle bulk chicken transactions
+      if (transaction.category === 'chicken' && transaction.bulkQuantities) {
+        const { hen: henCount, cock: cockCount, chicks: chicksCount } = transaction.bulkQuantities;
+        const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
+        const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
+        
+        // Update inventory for each chicken type with quantity > 0
+        if (henCount > 0) {
+          updateChickenInventory('hen', henCount, isIncrease, reason, transaction.description);
+        }
+        
+        if (cockCount > 0) {
+          updateChickenInventory('cock', cockCount, isIncrease, reason, transaction.description);
+        }
+        
+        if (chicksCount > 0) {
+          updateChickenInventory('chicks', chicksCount, isIncrease, reason, transaction.description);
+        }
+      }
+      // Handle single chicken type transactions
+      else if (transaction.category === 'chicken' && transaction.chickenType && transaction.quantity) {
+        const isIncrease = transaction.type === 'expense'; // Expense = buying chickens (increase)
+        const reason = transaction.type === 'expense' ? 'purchase' : 'sale';
+        
+        updateChickenInventory(
+          transaction.chickenType,
+          transaction.quantity,
+          isIncrease,
+          reason,
+          transaction.description
+        );
+      }
+      
+      setTransactions([...transactions, newTransaction]);
+      setShowTransactionForm(false);
+      toast({ title: 'Success', description: 'Transaction added successfully' });
+    } catch (error: any) {
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to add transaction', 
+        variant: 'destructive' 
+      });
+      console.error('Error adding transaction:', error);
+    }
   };
 
   const expenses = transactions.filter(transaction => transaction.type === 'expense');
   const income = transactions.filter(transaction => transaction.type === 'income');
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
