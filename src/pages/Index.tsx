@@ -68,11 +68,8 @@ const Index = () => {
     updateChickenInventory: hookUpdateChickenInventory
   } = useChickenInventory();
 
-  useEffect(() => {
-    if (activeInventoryTab === 'history' && user?.token) {
-      hookFetchChickenHistory();
-    }
-  }, [activeInventoryTab, user?.token, hookFetchChickenHistory]);
+  // We're removing the useEffect that fetches chicken history when switching tabs
+  // because the ChickenInventoryHistory component handles its own data fetching
 
   useEffect(() => {
     if (hookChickenCounts) { // Ensure hookChickenCounts is initialized

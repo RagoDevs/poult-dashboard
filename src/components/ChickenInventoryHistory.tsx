@@ -27,19 +27,26 @@ export function ChickenInventoryHistory({ history: propHistory, isLoading: propI
     reason: 'all' | string;
   }>({ type: 'all', reason: 'all' });
 
-  // Fetch history when component mounts or filter changes
+  // Fetch history only when filters change, not on initial mount if data already exists
   useEffect(() => {
-    const fetchHistory = async () => {
-      // Only pass type and reason to API if they're not 'all'
-      const typeParam = filter.type !== 'all' ? filter.type : undefined;
-      const reasonParam = filter.reason !== 'all' ? filter.reason : undefined;
-      await fetchChickenHistory(typeParam, reasonParam);
-    };
+    // Only fetch if filters are applied or if we don't have history data yet
+    const shouldFetch = 
+      (filter.type !== 'all' || filter.reason !== 'all') || // Filters are applied
+      (!propHistory || propHistory.length === 0); // No history data provided by parent
     
-    fetchHistory();
+    if (shouldFetch) {
+      const fetchHistory = async () => {
+        // Only pass type and reason to API if they're not 'all'
+        const typeParam = filter.type !== 'all' ? filter.type : undefined;
+        const reasonParam = filter.reason !== 'all' ? filter.reason : undefined;
+        await fetchChickenHistory(typeParam, reasonParam);
+      };
+      
+      fetchHistory();
+    }
     // Don't include fetchChickenHistory in dependencies to avoid infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter.type, filter.reason]);
+  }, [filter.type, filter.reason, propHistory]);
   
   // Determine which history to display: propHistory (initial/full) or localFilteredHistory (if filters applied)
   // For now, let's prioritize propHistory if available, otherwise localFilteredHistory if filters have been used.
