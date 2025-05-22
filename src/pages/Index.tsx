@@ -11,6 +11,7 @@ import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from '@/components/ui/use-toast';
 import { useChickenInventory, ChickenType as HookChickenType } from '@/hooks/use-chicken-inventory';
+import { useChickenHistory } from '@/hooks/use-chicken-history';
 
 export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
@@ -56,17 +57,22 @@ const Index = () => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   
+  // Use the chicken inventory hook for current chickens tab
   const {
     counts: hookChickenCounts,
-    history: hookChickenHistory,
     loading: hookInventoryLoading,
-    historyLoading: hookHistoryLoading,
     error: hookInventoryError,
-    historyError: hookHistoryError,
     fetchChickenInventory: hookFetchChickenInventory,
-    fetchChickenHistory: hookFetchChickenHistory,
     updateChickenInventory: hookUpdateChickenInventory
   } = useChickenInventory();
+
+  // Use the dedicated chicken history hook for history tab
+  const {
+    history: hookChickenHistory,
+    loading: hookHistoryLoading,
+    error: hookHistoryError,
+    fetchChickenHistory: hookFetchChickenHistory
+  } = useChickenHistory();
 
   // We're removing the useEffect that fetches chicken history when switching tabs
   // because the ChickenInventoryHistory component handles its own data fetching

@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { format } from 'date-fns';
-import { useChickenInventory, ChickenType, ChickenHistoryEntry } from "@/hooks/use-chicken-inventory";
+import { ChickenType, ChickenHistoryEntry } from '@/hooks/use-chicken-inventory';
+import { useChickenHistory } from '@/hooks/use-chicken-history';
 import { RefreshCcw } from "lucide-react";
 
 interface ChickenInventoryHistoryProps {
@@ -17,10 +18,10 @@ interface ChickenInventoryHistoryProps {
 export function ChickenInventoryHistory({ history: propHistory, isLoading: propIsLoading, error: propError }: ChickenInventoryHistoryProps) {
   const {
     history: internalHookHistory,
-    historyLoading: internalHookLoading,
-    historyError: internalHookError,
+    loading: internalHookLoading,
+    error: internalHookError,
     fetchChickenHistory
-  } = useChickenInventory();
+  } = useChickenHistory();
   
   const [filter, setFilter] = useState<{
     type: 'all' | ChickenType;
