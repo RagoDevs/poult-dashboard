@@ -9,11 +9,20 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface TransactionListProps {
   transactions: Transaction[];
   type: 'expenses' | 'income';
+  onCategoryChange?: (category: string) => void;
 }
 
-export function TransactionList({ transactions, type }: TransactionListProps) {
+export function TransactionList({ transactions, type, onCategoryChange }: TransactionListProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const isMobile = useIsMobile();
+  
+  // Handle category change and notify parent component
+  const handleCategoryChange = (category: string) => {
+    setCategoryFilter(category);
+    if (onCategoryChange) {
+      onCategoryChange(category);
+    }
+  };
 
   const formatCategoryName = (category: string): string => {
     if (!category) return '';
@@ -87,7 +96,7 @@ export function TransactionList({ transactions, type }: TransactionListProps) {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="all" onValueChange={setCategoryFilter} className="w-full">
+      <Tabs defaultValue="all" onValueChange={handleCategoryChange} className="w-full">
         <TabsList className="w-full flex overflow-x-auto bg-gray-50 p-1 border border-gray-100 rounded-md">
           {categories.map(category => (
             <TabsTrigger 

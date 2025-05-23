@@ -75,15 +75,28 @@ const Index = () => {
   } = useChickenHistory();
 
 
-  const loadTransactionsFromServer = useCallback(async () => {
+  // Track the currently selected category filter for API requests
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const loadTransactionsFromServer = useCallback(async (category?: string) => {
     if (!user || !user.token) {
       setTransactions([]); // Clear transactions if no user/token
       return;
     }
 
+    // Use the provided category or the current categoryFilter state
+    const currentCategory = category || categoryFilter;
+    
     try {
-      const expenseUrl = 'http://localhost:5055/v1/auth/transactions/type/expense';
-      const incomeUrl = 'http://localhost:5055/v1/auth/transactions/type/income';
+      // Base URLs for expense and income endpoints
+      let expenseUrl = 'http://localhost:5055/v1/auth/transactions/type/expense';
+      let incomeUrl = 'http://localhost:5055/v1/auth/transactions/type/income';
+      
+      // Add category filter if not 'all'
+      if (currentCategory !== 'all') {
+        expenseUrl = `${expenseUrl}?category_name=${currentCategory}`;
+        incomeUrl = `${incomeUrl}?category_name=${currentCategory}`;
+      }
 
       const headers = {
         'Authorization': `Bearer ${user.token}`,
@@ -157,7 +170,7 @@ const Index = () => {
         variant: 'destructive',
       });
     }
-  }, [user, toast, setTransactions]);
+  }, [user, toast, setTransactions, categoryFilter]);
 
   useEffect(() => {
     loadTransactionsFromServer();
@@ -401,7 +414,14 @@ const Index = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <TransactionList transactions={activeTab === 'expenses' ? expenses : income} type={activeTab} />
+                  <TransactionList 
+                    transactions={activeTab === 'expenses' ? expenses : income} 
+                    type={activeTab} 
+                    onCategoryChange={(category) => {
+                      setCategoryFilter(category);
+                      loadTransactionsFromServer(category);
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
