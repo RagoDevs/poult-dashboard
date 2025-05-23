@@ -78,7 +78,7 @@ const Index = () => {
   // Track the currently selected category filter for API requests
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
-  const loadTransactionsFromServer = useCallback(async (category?: string) => {
+  const loadTransactionsFromServer = useCallback(async (category?: string, tabType?: 'expenses' | 'income') => {
     if (!user || !user.token) {
       setTransactions([]); // Clear transactions if no user/token
       return;
@@ -86,26 +86,26 @@ const Index = () => {
 
     // Use the provided category or the current categoryFilter state
     const currentCategory = category || categoryFilter;
+    // Use the provided tab type or the current activeTab state
+    const currentTabType = tabType || activeTab;
     
     try {
-      // Base URLs for expense and income endpoints
-      let expenseUrl = 'http://localhost:5055/v1/auth/transactions/type/expense';
-      let incomeUrl = 'http://localhost:5055/v1/auth/transactions/type/income';
+      // Determine which endpoint to call based on the active tab
+      const baseUrl = currentTabType === 'expenses' 
+        ? 'http://localhost:5055/v1/auth/transactions/type/expense'
+        : 'http://localhost:5055/v1/auth/transactions/type/income';
       
       // Add category filter if not 'all'
+      let url = baseUrl;
       if (currentCategory !== 'all') {
-        expenseUrl = `${expenseUrl}?category_name=${currentCategory}`;
-        incomeUrl = `${incomeUrl}?category_name=${currentCategory}`;
+        url = `${baseUrl}?category_name=${currentCategory}`;
       }
 
       const headers = {
         'Authorization': `Bearer ${user.token}`,
       };
 
-      const [expenseResponse, incomeResponse] = await Promise.all([
-        fetch(expenseUrl, { headers }),
-        fetch(incomeUrl, { headers })
-      ]);
+      const response = await fetch(url, { headers });
 
       const processApiResponse = (responseData: any): Transaction[] => {
         let transactionsArray: any[] = [];
@@ -127,40 +127,32 @@ const Index = () => {
         }));
       };
 
-      let fetchedExpenses: Transaction[] = [];
-      if (expenseResponse.ok) {
-        const expenseData = await expenseResponse.json();
-        fetchedExpenses = processApiResponse(expenseData);
+      let fetchedTransactions: Transaction[] = [];
+      if (response.ok) {
+        const data = await response.json();
+        fetchedTransactions = processApiResponse(data);
       } else {
-        const errorData = await expenseResponse.json().catch(() => ({ message: 'Failed to fetch expenses and could not parse error response' }));
-        console.error('Error fetching expenses:', expenseResponse.status, errorData);
+        const errorData = await response.json().catch(() => ({ 
+          message: `Failed to fetch ${currentTabType} and could not parse error response` 
+        }));
+        console.error(`Error fetching ${currentTabType}:`, response.status, errorData);
         toast({
-          title: 'Error Fetching Expenses',
-          description: errorData.message || `Server responded with status: ${expenseResponse.status}`,
-          variant: 'destructive',
-        });
-      }
-
-      let fetchedIncome: Transaction[] = [];
-      if (incomeResponse.ok) {
-        const incomeData = await incomeResponse.json();
-        fetchedIncome = processApiResponse(incomeData);
-      } else {
-        const errorData = await incomeResponse.json().catch(() => ({ message: 'Failed to fetch income and could not parse error response' }));
-        console.error('Error fetching income:', incomeResponse.status, errorData);
-        toast({
-          title: 'Error Fetching Income',
-          description: errorData.message || `Server responded with status: ${incomeResponse.status}`,
+          title: `Error Fetching ${currentTabType === 'expenses' ? 'Expenses' : 'Income'}`,
+          description: errorData.message || `Server responded with status: ${response.status}`,
           variant: 'destructive',
         });
       }
       
-      const allTransactions = [
-        ...(Array.isArray(fetchedExpenses) ? fetchedExpenses : []),
-        ...(Array.isArray(fetchedIncome) ? fetchedIncome : [])
-      ];
-      
-      setTransactions(allTransactions);
+      // Update only the transactions for the current tab type
+      setTransactions(prevTransactions => {
+        // Keep transactions of the other type
+        const otherTypeTransactions = prevTransactions.filter(t => 
+          t.type !== (currentTabType === 'expenses' ? 'expense' : 'income')
+        );
+        
+        // Combine with newly fetched transactions
+        return [...otherTypeTransactions, ...fetchedTransactions];
+      });
 
     } catch (error: any) {
       console.error('Failed to fetch transactions:', error);
@@ -170,11 +162,12 @@ const Index = () => {
         variant: 'destructive',
       });
     }
-  }, [user, toast, setTransactions, categoryFilter]);
+  }, [user, toast, setTransactions, categoryFilter, activeTab]);
 
+  // This effect will run when activeTab or categoryFilter changes
   useEffect(() => {
-    loadTransactionsFromServer();
-  }, [loadTransactionsFromServer]);
+    loadTransactionsFromServer(categoryFilter, activeTab);
+  }, [loadTransactionsFromServer, activeTab, categoryFilter]);
 
   // Removed duplicate useEffect that was causing multiple fetches when switching to the history tab
 
