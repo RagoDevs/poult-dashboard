@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Package, ArrowUp, ArrowDown } from "lucide-react";
-import { Transaction } from "@/pages/Index";
+import { ArrowUp, ArrowDown, DollarSign, Package } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Transaction } from "@/pages/Index";
+import { useFinancialSummary } from "@/hooks/use-financial-summary";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface TransactionSummaryProps {
@@ -10,6 +12,7 @@ interface TransactionSummaryProps {
 
 export function TransactionSummary({ transactions }: TransactionSummaryProps) {
   const isMobile = useIsMobile();
+  const { summary, loading, error, fetchFinancialSummary } = useFinancialSummary();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -19,15 +22,7 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
     }).format(amount);
   };
 
-  const totalExpenses = transactions
-    .filter(transaction => transaction.type === 'expense')
-    .reduce((total, transaction) => total + transaction.amount, 0);
-  
-  const totalIncome = transactions
-    .filter(transaction => transaction.type === 'income')
-    .reduce((total, transaction) => total + transaction.amount, 0);
-  
-  const profit = totalIncome - totalExpenses;
+  // Calculate chicken stats from transactions (not included in API summary)
   const chickensPurchased = transactions
     .filter(transaction => transaction.type === 'expense' && transaction.category === 'chicken')
     .reduce((total, transaction) => total + (transaction.quantity || 0), 0);
@@ -45,14 +40,22 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-5">
         <CardTitle className="text-sm font-medium text-gray-700">Total Profit</CardTitle>
         <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-          {profit >= 0 ? 
+          {!loading && summary && summary.total_profit >= 0 ? 
             <ArrowUp className="h-4 w-4 text-gray-600" /> : 
             <ArrowDown className="h-4 w-4 text-gray-600" />
           }
         </div>
       </CardHeader>
       <CardContent className="pt-1 px-5 pb-5">
-        <div className="text-2xl font-bold text-gray-900">{formatCurrency(profit)}</div>
+        {loading ? (
+          <Skeleton className="h-8 w-24" />
+        ) : error ? (
+          <div className="text-sm text-red-500">Error loading data</div>
+        ) : summary ? (
+          <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.total_profit)}</div>
+        ) : (
+          <div className="text-sm text-gray-500">No data available</div>
+        )}
         <p className="text-xs text-gray-500 mt-1">Income minus expenses</p>
       </CardContent>
     </Card>,
@@ -65,7 +68,15 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-1 px-5 pb-5">
-        <div className="text-2xl font-bold text-gray-900">{formatCurrency(totalIncome)}</div>
+        {loading ? (
+          <Skeleton className="h-8 w-24" />
+        ) : error ? (
+          <div className="text-sm text-red-500">Error loading data</div>
+        ) : summary ? (
+          <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.total_income)}</div>
+        ) : (
+          <div className="text-sm text-gray-500">No data available</div>
+        )}
         <p className="text-xs text-gray-500 mt-1">All sales and income</p>
       </CardContent>
     </Card>,
@@ -78,7 +89,15 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-1 px-5 pb-5">
-        <div className="text-2xl font-bold text-gray-900">{formatCurrency(totalExpenses)}</div>
+        {loading ? (
+          <Skeleton className="h-8 w-24" />
+        ) : error ? (
+          <div className="text-sm text-red-500">Error loading data</div>
+        ) : summary ? (
+          <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.total_expenses)}</div>
+        ) : (
+          <div className="text-sm text-gray-500">No data available</div>
+        )}
         <p className="text-xs text-gray-500 mt-1">All expenses</p>
       </CardContent>
     </Card>
