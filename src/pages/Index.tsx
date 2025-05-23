@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,16 +78,30 @@ const Index = () => {
   // Track the currently selected category filter for API requests
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
+  // Use a ref to track the last request to prevent duplicate calls
+  const lastRequestRef = React.useRef<string | null>(null);
+
   const loadTransactionsFromServer = useCallback(async (category?: string, tabType?: 'expenses' | 'income') => {
     if (!user || !user.token) {
       setTransactions([]); // Clear transactions if no user/token
       return;
     }
-
+    
     // Use the provided category or the current categoryFilter state
     const currentCategory = category || categoryFilter;
     // Use the provided tab type or the current activeTab state
     const currentTabType = tabType || activeTab;
+    
+    // Create a request key to track this specific request
+    const requestKey = `${currentTabType}:${currentCategory}`;
+    
+    // Skip if this is a duplicate request (same category + type)
+    if (requestKey === lastRequestRef.current) {
+      return;
+    }
+    
+    // Update the last request ref
+    lastRequestRef.current = requestKey;
     
     try {
       // Determine which endpoint to call based on the active tab
@@ -164,10 +178,15 @@ const Index = () => {
     }
   }, [user, toast, setTransactions, categoryFilter, activeTab]);
 
-  // This effect will run when activeTab or categoryFilter changes
+  // Only load transactions when component mounts or when dependencies change
   useEffect(() => {
+    if (!user || !user.token) return;
+    
+    // The reference check in loadTransactionsFromServer will prevent duplicate requests
     loadTransactionsFromServer(categoryFilter, activeTab);
-  }, [loadTransactionsFromServer, activeTab, categoryFilter]);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFilter, activeTab, user]);
 
   // Removed duplicate useEffect that was causing multiple fetches when switching to the history tab
 
@@ -257,7 +276,8 @@ const Index = () => {
         }
       }
 
-      loadTransactionsFromServer(); // Refetch all transactions
+      // Refetch all transactions (the function will check if we're already loading)
+      loadTransactionsFromServer();
       setShowTransactionForm(false);
       toast({ title: 'Success', description: 'Transaction added successfully and list updated.' });
     } catch (error: any) {
@@ -411,8 +431,10 @@ const Index = () => {
                     transactions={activeTab === 'expenses' ? expenses : income} 
                     type={activeTab} 
                     onCategoryChange={(category) => {
+                      // Update the category filter state
                       setCategoryFilter(category);
-                      loadTransactionsFromServer(category);
+                      // The loadTransactionsFromServer function will check if we're already loading
+                      loadTransactionsFromServer(category, activeTab);
                     }}
                   />
                 </div>

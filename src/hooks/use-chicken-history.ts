@@ -21,7 +21,7 @@ export function useChickenHistory() {
     }
     
     try {
-      // Build the URL with optional query parameters
+
       let url = `${API_BASE_URL}/auth/chicken-history`;
       const params = new URLSearchParams();
       
