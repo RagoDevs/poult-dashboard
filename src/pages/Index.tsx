@@ -373,7 +373,12 @@ const Index = () => {
                 <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 shadow-sm">
                   <Button 
                     variant={activeTab === 'expenses' ? 'default' : 'ghost'} 
-                    onClick={() => setActiveTab('expenses')}
+                    onClick={() => {
+                      // Reset the category filter when switching tabs
+                      setCategoryFilter('all');
+                      // Update the active tab
+                      setActiveTab('expenses');
+                    }}
                     size="sm"
                     className="rounded-md text-sm"
                   >
@@ -381,7 +386,12 @@ const Index = () => {
                   </Button>
                   <Button 
                     variant={activeTab === 'income' ? 'default' : 'ghost'} 
-                    onClick={() => setActiveTab('income')}
+                    onClick={() => {
+                      // Reset the category filter when switching tabs
+                      setCategoryFilter('all');
+                      // Update the active tab
+                      setActiveTab('income');
+                    }}
                     size="sm"
                     className="rounded-md text-sm"
                   >
@@ -429,7 +439,8 @@ const Index = () => {
                 <div className="overflow-x-auto">
                   <TransactionList 
                     transactions={activeTab === 'expenses' ? expenses : income} 
-                    type={activeTab} 
+                    type={activeTab}
+                    key={activeTab} /* Add key to force re-render and reset internal state when tab changes */
                     onCategoryChange={(category) => {
                       // Update the category filter state
                       setCategoryFilter(category);
