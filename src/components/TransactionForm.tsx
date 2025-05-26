@@ -37,8 +37,13 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
       return;
     }
     
-    // For income, always set category to 'chicken' for chicken sales
-    const finalCategory = isIncome ? 'chicken' : category;
+    // For income, always set category to 'chicken_sale', for expenses if chicken is selected, use 'chicken_purchase'
+    let finalCategory = category;
+    if (isIncome) {
+      finalCategory = 'chicken_sale';
+    } else if (category === 'chicken') {
+      finalCategory = 'chicken_purchase';
+    }
     
     onSubmit({
       type,
@@ -64,13 +69,13 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {isIncome ? (
-              <option value="chicken">Chicken Sales</option>
+              <option value="chicken_sale">Chicken Sales</option>
             ) : (
               <>
                 <option value="food">Food</option>
                 <option value="medicine">Medicine</option>
                 <option value="tools">Tools</option>
-                <option value="chicken">Chicken Purchase</option>
+                <option value="chicken_purchase">Chicken Purchase</option>
                 <option value="salary">Salary</option>
                 <option value="other">Other</option>
               </>

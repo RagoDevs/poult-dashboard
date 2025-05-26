@@ -35,7 +35,7 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
   
   const getCategoryIcon = (category: string, type: TransactionType) => {
     // Use monochromatic icons (gray-600 for better visibility)
-    if (category === 'chicken') {
+    if (category === 'chicken' || category === 'chicken_purchase' || category === 'chicken_sale') {
       return <Bird className="text-gray-600" />;
     }
     
@@ -120,7 +120,6 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Category</TableHead>
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Date</TableHead>
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Description</TableHead>
-                {/* Removed Quantity column */}
                 <TableHead className="text-right whitespace-nowrap font-medium text-gray-700">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -142,7 +141,6 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                   <TableCell className="max-w-[150px] sm:max-w-[250px] truncate text-gray-600">
                     {transaction.description || '—'}
                   </TableCell>
-                  {/* Removed Quantity cell */}
                   <TableCell className="text-right whitespace-nowrap font-medium text-gray-900">{formatCurrency(transaction.amount)}</TableCell>
                 </TableRow>
               ))}

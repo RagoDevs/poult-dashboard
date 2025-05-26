@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'salary' | 'other';
+export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'chicken_purchase' | 'chicken_sale' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
 
 export interface Expense {
@@ -59,7 +59,7 @@ const Index = () => {
   // Use a ref to track the last request to prevent duplicate calls
   const lastRequestRef = React.useRef<string | null>(null);
 
-  const loadTransactionsFromServer = useCallback(async (category?: string, tabType?: 'expenses' | 'income') => {
+  const loadTransactionsFromServer = useCallback(async (category?: string, tabType?: 'expenses' | 'income', forceRefresh: boolean = false) => {
     if (!user || !user.token) {
       setTransactions([]); // Clear transactions if no user/token
       return;
@@ -73,8 +73,8 @@ const Index = () => {
     // Create a request key to track this specific request
     const requestKey = `${currentTabType}:${currentCategory}`;
     
-    // Skip if this is a duplicate request (same category + type)
-    if (requestKey === lastRequestRef.current) {
+    // Skip if this is a duplicate request (same category + type) and not forced refresh
+    if (requestKey === lastRequestRef.current && !forceRefresh) {
       return;
     }
     
@@ -214,7 +214,8 @@ const Index = () => {
         id: crypto.randomUUID(),
       };
       
-      loadTransactionsFromServer();
+      // Force refresh transactions after adding a new one
+      loadTransactionsFromServer(categoryFilter, activeTab, true);
       setShowTransactionForm(false);
       toast({ title: 'Success', description: 'Transaction added successfully and list updated.' });
     } catch (error: any) {
