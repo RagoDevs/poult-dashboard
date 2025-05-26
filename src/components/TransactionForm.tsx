@@ -16,12 +16,6 @@ interface TransactionFormProps {
     date: string;
     description: string;
     quantity?: number;
-    chickenType?: 'hen' | 'cock' | 'chicks';
-    bulkQuantities?: {
-      hen: number;
-      cock: number;
-      chicks: number;
-    };
   }) => void;
   onCancel: () => void;
   type: TransactionType;
@@ -32,15 +26,6 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
-  // For single chicken type transactions
-  const [quantity, setQuantity] = useState('');
-  const [chickenType, setChickenType] = useState<'hen' | 'cock' | 'chicks' | undefined>(undefined);
-  
-  // For bulk chicken transactions
-  const [bulkMode, setBulkMode] = useState(false);
-  const [henQuantity, setHenQuantity] = useState('');
-  const [cockQuantity, setCockQuantity] = useState('');
-  const [chicksQuantity, setChicksQuantity] = useState('');
   const isMobile = useIsMobile();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -55,58 +40,13 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
     // For income, always set category to 'chicken' for chicken sales
     const finalCategory = isIncome ? 'chicken' : category;
     
-    // Handle bulk mode submission
-    if (finalCategory === 'chicken' && bulkMode) {
-      const henCount = parseInt(henQuantity) || 0;
-      const cockCount = parseInt(cockQuantity) || 0;
-      const chicksCount = parseInt(chicksQuantity) || 0;
-      
-      // Validate that at least one type has a quantity
-      if (henCount + cockCount + chicksCount === 0) {
-        alert('Please enter at least one chicken quantity for bulk transactions');
-        return;
-      }
-      
-      // Create a bulk description if none provided
-      let finalDescription = description;
-      if (!finalDescription) {
-        finalDescription = `Bulk ${type === 'expense' ? 'purchase' : 'sale'}: `;
-        if (henCount > 0) finalDescription += `${henCount} hens `;
-        if (cockCount > 0) finalDescription += `${cockCount} cocks `;
-        if (chicksCount > 0) finalDescription += `${chicksCount} chicks`;
-        finalDescription = finalDescription.trim();
-      }
-      
-      // Submit the transaction with bulk data
-      onSubmit({
-        type,
-        category: finalCategory,
-        amount: parseFloat(amount),
-        date,
-        description: finalDescription,
-        bulkQuantities: {
-          hen: henCount,
-          cock: cockCount,
-          chicks: chicksCount
-        }
-      });
-      return;
-    }
-    
-    // Handle single chicken type transactions
-    if (finalCategory === 'chicken' && (!chickenType || !quantity)) {
-      alert('Please select a chicken type and enter quantity for chicken transactions');
-      return;
-    }
-    
     onSubmit({
       type,
       category: finalCategory,
       amount: parseFloat(amount),
       date,
-      description,
-      quantity: finalCategory === 'chicken' ? parseInt(quantity) : undefined,
-      chickenType: finalCategory === 'chicken' ? chickenType : undefined,
+      description
+      // Removed quantity field as requested
     });
   };
 
@@ -165,104 +105,10 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
           />
         </div>
 
-        {(category === 'chicken' || isIncome) && !bulkMode && (
-          <div className="space-y-2">
-            <Label htmlFor="quantity">Number of Chickens</Label>
-            <Input
-              id="quantity"
-              type="number"
-              placeholder="0"
-              min="1"
-              step="1"
-              required
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-          </div>
-        )}
+        {/* Removed Number of Chickens field as requested */}
       </div>
       
-      {(category === 'chicken' || isIncome) && (
-        <div className="space-y-4">
-          {/* Bulk mode toggle */}
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="bulkMode"
-              checked={bulkMode}
-              onChange={() => setBulkMode(!bulkMode)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <Label htmlFor="bulkMode">Bulk {type === 'expense' ? 'Purchase' : 'Sale'}</Label>
-          </div>
-          
-          {bulkMode ? (
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Enter quantities for each type:</h3>
-              
-              <div className="grid grid-cols-3 gap-4">
-                {/* Hen quantity */}
-                <div className="space-y-2">
-                  <Label htmlFor="henQuantity">Hens</Label>
-                  <Input
-                    id="henQuantity"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    step="1"
-                    value={henQuantity}
-                    onChange={(e) => setHenQuantity(e.target.value)}
-                  />
-                </div>
-                
-                {/* Cock quantity */}
-                <div className="space-y-2">
-                  <Label htmlFor="cockQuantity">Cocks</Label>
-                  <Input
-                    id="cockQuantity"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    step="1"
-                    value={cockQuantity}
-                    onChange={(e) => setCockQuantity(e.target.value)}
-                  />
-                </div>
-                
-                {/* Chicks quantity */}
-                <div className="space-y-2">
-                  <Label htmlFor="chicksQuantity">Chicks</Label>
-                  <Input
-                    id="chicksQuantity"
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    step="1"
-                    value={chicksQuantity}
-                    onChange={(e) => setChicksQuantity(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="chickenType">Chicken Type</Label>
-                <Select value={chickenType} onValueChange={(value: 'hen' | 'cock' | 'chicks') => setChickenType(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select chicken type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hen">Hen</SelectItem>
-                    <SelectItem value="cock">Cock</SelectItem>
-                    <SelectItem value="chicks">Chicks</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+      {/* Quantity field is already shown in the grid above for chicken category or income */}
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>

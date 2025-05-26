@@ -2,16 +2,21 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, User, LogOut } from "lucide-react";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionSummary } from "@/components/TransactionSummary";
-import { ChickenInventory } from "@/components/ChickenInventory";
-import { ChickenInventoryHistory } from "@/components/ChickenInventoryHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from '@/components/ui/use-toast';
-import { useChickenInventory, ChickenType as HookChickenType } from '@/hooks/use-chicken-inventory';
-import { useChickenHistory } from '@/hooks/use-chicken-history';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
@@ -31,48 +36,21 @@ export interface Transaction {
   amount: number;
   date: string;
   description: string;
-  quantity?: number;
-  chickenType?: 'hen' | 'cock' | 'chicks';
 }
 
-// Type for inventory history entry
-type InventoryChangeReason = 'purchase' | 'sale' | 'birth' | 'death' | 'gift' | 'other';
-type InventoryHistoryEntry = {
-  date: string;
-  type: 'hen' | 'cock' | 'chicks';
-  previousValue: number;
-  newValue: number;
-  change: number;
-  reason: InventoryChangeReason;
-  notes: string;
-};
+
 
 const Index = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
-  const [activeInventoryTab, setActiveInventoryTab] = useState<'current' | 'history'>('current');
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   const { user, logout } = useAuth();
   const { toast } = useToast();
   
-  // Use the chicken inventory hook for current chickens tab
-  const {
-    counts: hookChickenCounts,
-    loading: hookInventoryLoading,
-    error: hookInventoryError,
-    fetchChickenInventory: hookFetchChickenInventory,
-    updateChickenInventory: hookUpdateChickenInventory
-  } = useChickenInventory();
 
-  // Use the dedicated chicken history hook for history tab
-  const {
-    history: hookChickenHistory,
-    loading: hookHistoryLoading,
-    error: hookHistoryError,
-    fetchChickenHistory: hookFetchChickenHistory
-  } = useChickenHistory();
 
 
   // Track the currently selected category filter for API requests
@@ -135,9 +113,7 @@ const Index = () => {
           category: tx.category_name as ExpenseCategory,
           amount: tx.amount,
           date: tx.date.split('T')[0],
-          description: tx.description,
-          quantity: tx.quantity, // Will be undefined if not present
-          chickenType: tx.chickenType, // Will be undefined if not present
+          description: tx.description
         }));
       };
 
@@ -190,7 +166,7 @@ const Index = () => {
 
   // Removed duplicate useEffect that was causing multiple fetches when switching to the history tab
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'> & { bulkQuantities?: { hen: number; cock: number; chicks: number } }) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     
     if (!user || !user.token) {
       toast({ 
@@ -208,42 +184,17 @@ const Index = () => {
       amount: number;
       date: string;
       description: string;
-      chickenType?: 'hen' | 'cock' | 'chicks';
-      quantity?: number;
-      bulkQuantities?: {
-        hen: number;
-        cock: number;
-        chicks: number;
-      };
     }
     
-    // Prepare transaction data for API - ensure only serializable data is included
     const apiTransaction: ApiTransactionBase = {
       type: transaction.type,
       category: transaction.category,
       amount: transaction.amount,
-      date: `${transaction.date}T00:00:00Z`, // Append time for Go backend
+      date: `${transaction.date}T00:00:00Z`, 
       description: transaction.description
     };
     
-    // Add chicken-specific fields if applicable
-    if (transaction.category === 'chicken') {
-      if (transaction.bulkQuantities) {
-        apiTransaction.bulkQuantities = {
-          hen: transaction.bulkQuantities.hen || 0,
-          cock: transaction.bulkQuantities.cock || 0,
-          chicks: transaction.bulkQuantities.chicks || 0
-        };
-      } else if (transaction.chickenType && transaction.quantity) {
-        apiTransaction.chickenType = transaction.chickenType;
-        apiTransaction.quantity = transaction.quantity;
-      }
-    }
-    
-    console.log('Sending transaction to API:', apiTransaction);
-    
     try {
-      // Send transaction to API
       const response = await fetch('http://localhost:5055/v1/auth/transactions', {
         method: 'POST',
         headers: { 
@@ -257,26 +208,12 @@ const Index = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to add transaction');
       }
-      // Backend returns OK with nil body, so we don't parse JSON for success.
-      // Generate ID client-side.
+      
       const newTransaction = {
         ...transaction,
         id: crypto.randomUUID(),
       };
       
-      // Since the backend already handles chicken inventory updates when posting transactions,
-      // we only need to fetch the updated data once after the transaction is complete
-      if (transaction.category === 'chicken') {
-        // Fetch the updated chicken inventory data
-        await hookFetchChickenInventory();
-        
-        // Only fetch history if we're on the history tab
-        if (activeInventoryTab === 'history') {
-          await hookFetchChickenHistory();
-        }
-      }
-
-      // Refetch all transactions (the function will check if we're already loading)
       loadTransactionsFromServer();
       setShowTransactionForm(false);
       toast({ title: 'Success', description: 'Transaction added successfully and list updated.' });
@@ -295,131 +232,120 @@ const Index = () => {
   
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm py-4 border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <header className="bg-white shadow-sm py-5 border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
-          <div></div> {/* Empty div for flex alignment */}
-          <h1 className="text-2xl font-semibold text-gray-900 flex items-center">
-            <span className="transform -scale-x-100 inline-block mr-2">🐔</span>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+            <span className="transform -scale-x-100 inline-block mr-3 text-3xl">🐔</span>
             Kuku Farm
           </h1>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={logout}
-            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          >
-            Logout
-          </Button>
+          
+          <div className="flex items-center">
+            {/* User Account Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-full h-10 w-10 p-0 border-gray-300">
+                  <span className="sr-only">Open user menu</span>
+                  <div className="flex items-center justify-center h-full w-full bg-gray-300 text-gray-700 rounded-full">
+                    <span className="text-sm font-medium">{user?.name ? `${user.name.split(' ')[0][0]}${user.name.split(' ')[1]?.[0] || ''}` : 'LA'}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="p-2">
+                  <p className="text-sm font-bold">My Account</p>
+                  <p className="text-sm">{user?.name || 'Lugano Abel'}</p>
+                  <p className="text-xs text-gray-500">{user?.email || 'lugano.ngulwa@gmail.com'}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto py-6 sm:py-8 px-4 sm:px-6">
-        {/* Financial Summary Cards */}
-        <section className="mb-10">
+      <main className="container mx-auto py-8 sm:py-10 px-4 sm:px-6 relative flex-grow">
+        {/* Financial Summary */}
+        <section className="mb-12">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">Financial Overview</h2>
+            <div className="hidden sm:block">
+              <Button 
+                onClick={() => setShowTransactionForm(true)} 
+                className="bg-gray-900 hover:bg-gray-800 text-white shadow-sm transition-colors"
+                size="sm"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add {activeTab === 'expenses' ? 'Expense' : 'Income'}
+              </Button>
+            </div>
+          </div>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
             <TransactionSummary transactions={transactions} />
           </div>
         </section>
         
-        {/* Inventory Section */}
-        <section className="mb-10">
-          <div className="flex flex-col">
-            <div className="flex justify-center mb-4 md:mb-5">
-              <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 shadow-sm">
-                <Button 
-                  variant={activeInventoryTab === 'current' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveInventoryTab('current')}
-                  size="sm"
-                  className="rounded-md text-sm"
-                >
-                  Current Chickens
-                </Button>
-                <Button 
-                  variant={activeInventoryTab === 'history' ? 'default' : 'ghost'} 
-                  onClick={() => setActiveInventoryTab('history')}
-                  size="sm"
-                  className="rounded-md text-sm"
-                >
-                  Chicken History
-                </Button>
-              </div>
-            </div>
-            
-            {/* Inventory Content */}
-            <div className="rounded-xl overflow-hidden">
-              {activeInventoryTab === 'current' ? (
-                <ChickenInventory 
-                  counts={hookChickenCounts}
-                  isLoading={hookInventoryLoading}
-                  error={hookInventoryError}
-                  updateChickenInventory={hookUpdateChickenInventory} // Pass down the function
-                  fetchChickenInventory={hookFetchChickenInventory}   // Pass down the function
-                />
-              ) : (
-                <ChickenInventoryHistory history={hookChickenHistory} isLoading={hookHistoryLoading} error={hookHistoryError} />
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Transactions Section */}
         <section>
           <div className="flex flex-col">
-            <div className="flex flex-col items-center mb-6 gap-4">
-              <div className="flex justify-center gap-4 w-full">
-                <div className="flex p-1 bg-gray-100 rounded-lg border border-gray-200 shadow-sm">
+            <div className="mb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg shadow-sm">
                   <Button 
                     variant={activeTab === 'expenses' ? 'default' : 'ghost'} 
                     onClick={() => {
-                      // Reset the category filter when switching tabs
                       setCategoryFilter('all');
-                      // Update the active tab
                       setActiveTab('expenses');
                     }}
                     size="sm"
-                    className="rounded-md text-sm"
+                    className="rounded-md font-medium"
                   >
                     Expenses
                   </Button>
                   <Button 
                     variant={activeTab === 'income' ? 'default' : 'ghost'} 
                     onClick={() => {
-                      // Reset the category filter when switching tabs
                       setCategoryFilter('all');
-                      // Update the active tab
                       setActiveTab('income');
                     }}
                     size="sm"
-                    className="rounded-md text-sm"
+                    className="rounded-md font-medium"
                   >
                     Income
                   </Button>
                 </div>
-                <Button 
-                  onClick={() => setShowTransactionForm(true)} 
-                  className="border-gray-200 bg-white shadow-sm hover:bg-gray-50"
-                  variant="outline"
-                  size="sm"
-                >
-                  <Plus className="mr-2 h-4 w-4 text-gray-600" />
-                  Add {activeTab === 'expenses' ? 'Expense' : 'Income'}
-                </Button>
               </div>
             </div>
-            
-            {/* Transaction Form */}
+
             {showTransactionForm && (
-              <Card className="mb-8 border border-gray-200 shadow-sm">
-                <CardHeader className="pb-3 bg-gray-50">
-                  <CardTitle className="text-lg">Add New {activeTab === 'expenses' ? 'Expense' : 'Income'}</CardTitle>
-                  <CardDescription>
-                    Enter the details of your new {activeTab === 'expenses' ? 'expense' : 'income'}
-                  </CardDescription>
+              <Card className="mb-8 border border-gray-200 shadow-md bg-white rounded-xl overflow-hidden">
+                <CardHeader className="pb-4 bg-gray-50 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold text-gray-900">Add New {activeTab === 'expenses' ? 'Expense' : 'Income'}</CardTitle>
+                      <CardDescription className="mt-1">
+                        Enter the details of your new {activeTab === 'expenses' ? 'expense' : 'income'}
+                      </CardDescription>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowTransactionForm(false)}
+                      className="rounded-full h-8 w-8 p-0"
+                    >
+                      <span className="sr-only">Close</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </Button>
+                  </div>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="pt-6 px-6">
                   <TransactionForm 
                     onSubmit={addTransaction} 
                     onCancel={() => setShowTransactionForm(false)} 
@@ -429,22 +355,35 @@ const Index = () => {
               </Card>
             )}
 
-            {/* Transaction List */}
-            <Card className="border border-gray-200 shadow-sm">
-              <CardHeader className="pb-3 bg-gray-50 border-b border-gray-200">
-                <CardTitle className="text-lg">{activeTab === 'expenses' ? 'Recent Expenses' : 'Recent Income'}</CardTitle>
-                <CardDescription>View and filter your {activeTab === 'expenses' ? 'expenses' : 'income'}</CardDescription>
+            <Card className="border border-gray-200 shadow-md bg-white rounded-xl overflow-hidden">
+              <CardHeader className="pb-4 bg-gray-50 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-bold text-gray-900">{activeTab === 'expenses' ? 'Recent Expenses' : 'Recent Income'}</CardTitle>
+                    <CardDescription className="mt-1">
+                      View and filter your {activeTab === 'expenses' ? 'expenses' : 'income'}
+                    </CardDescription>
+                  </div>
+                  <div className="sm:hidden">
+                    <Button 
+                      onClick={() => setShowTransactionForm(true)} 
+                      className="bg-gray-900 hover:bg-gray-800 text-white shadow-sm transition-colors"
+                      size="sm"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <TransactionList 
                     transactions={activeTab === 'expenses' ? expenses : income} 
                     type={activeTab}
-                    key={activeTab} /* Add key to force re-render and reset internal state when tab changes */
+                    key={activeTab} 
                     onCategoryChange={(category) => {
-                      // Update the category filter state
                       setCategoryFilter(category);
-                      // The loadTransactionsFromServer function will check if we're already loading
                       loadTransactionsFromServer(category, activeTab);
                     }}
                   />
@@ -455,10 +394,27 @@ const Index = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-10 py-6 border-t border-gray-200 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} Kuku Farm. All rights reserved.</p>
+      {/* Floating Action Button for Mobile */}
+      <div className="fixed bottom-6 right-6 sm:hidden z-20">
+        <Button
+          onClick={() => setShowTransactionForm(true)}
+          className="h-14 w-14 rounded-full bg-gray-900 hover:bg-gray-800 shadow-lg flex items-center justify-center"
+          size="lg"
+        >
+          <Plus className="h-6 w-6 text-white" />
+          <span className="sr-only">Add Transaction</span>
+        </Button>
+      </div>
+
+      <footer className="mt-auto py-8 border-t border-gray-200 bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="flex items-center mb-4">
+              <span className="transform -scale-x-100 inline-block mr-2 text-xl">🐔</span>
+              <span className="font-semibold text-gray-900">Kuku Farm</span>
+            </div>
+            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Kuku Farm. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>

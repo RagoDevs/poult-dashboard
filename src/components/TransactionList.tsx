@@ -33,13 +33,10 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
       .join(' ');
   };
   
-  const getCategoryIcon = (category: string, type: TransactionType, chickenType?: string) => {
+  const getCategoryIcon = (category: string, type: TransactionType) => {
     // Use monochromatic icons (gray-600 for better visibility)
     if (category === 'chicken') {
-      if (chickenType === 'hen' || chickenType === 'cock' || chickenType === 'baby') {
-        return <Bird className="text-gray-600" />;
-      }
-      return <Package className="text-gray-600" />;
+      return <Bird className="text-gray-600" />;
     }
     
     if (type === 'income') {
@@ -77,15 +74,7 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
     }).format(amount);
   };
 
-  const getChickenTypeDisplay = (chickenType?: string) => {
-    if (!chickenType) return '';
-    switch (chickenType) {
-      case 'hen': return ' (Hen)';
-      case 'cock': return ' (Cock)';
-      case 'baby': return ' (Children)';
-      default: return '';
-    }
-  };
+  // Removed getChickenTypeDisplay function as it's no longer needed
 
   // Get unique categories from transactions
   const categories = ['all', ...new Set(transactions.map(t => t.category))];
@@ -131,7 +120,7 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Category</TableHead>
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Date</TableHead>
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Description</TableHead>
-                {type === 'income' && <TableHead className="whitespace-nowrap font-medium text-gray-700">Quantity</TableHead>}
+                {/* Removed Quantity column */}
                 <TableHead className="text-right whitespace-nowrap font-medium text-gray-700">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -143,26 +132,17 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                 >
                   <TableCell className="flex items-center gap-2 whitespace-nowrap py-3">
                     <div className="flex items-center justify-center bg-gray-100 rounded p-1.5 w-8 h-8">
-                      {getCategoryIcon(transaction.category, transaction.type, transaction.chickenType)}
+                      {getCategoryIcon(transaction.category, transaction.type)}
                     </div>
                     <span className="font-medium text-gray-900">
                       {formatCategoryName(transaction.category)}
                     </span>
-                    {transaction.chickenType && (
-                      <span className="text-xs text-gray-500 font-normal">
-                        {getChickenTypeDisplay(transaction.chickenType)}
-                      </span>
-                    )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-gray-600">{formatDate(transaction.date)}</TableCell>
                   <TableCell className="max-w-[150px] sm:max-w-[250px] truncate text-gray-600">
                     {transaction.description || '—'}
                   </TableCell>
-                  {type === 'income' && (
-                    <TableCell className="whitespace-nowrap text-gray-600">
-                      {transaction.quantity ? transaction.quantity : '—'}
-                    </TableCell>
-                  )}
+                  {/* Removed Quantity cell */}
                   <TableCell className="text-right whitespace-nowrap font-medium text-gray-900">{formatCurrency(transaction.amount)}</TableCell>
                 </TableRow>
               ))}
