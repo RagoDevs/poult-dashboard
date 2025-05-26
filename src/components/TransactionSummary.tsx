@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, DollarSign, Package } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,6 +14,11 @@ interface TransactionSummaryProps {
 export function TransactionSummary({ transactions }: TransactionSummaryProps) {
   const isMobile = useIsMobile();
   const { summary, loading, error, fetchFinancialSummary } = useFinancialSummary();
+  
+  // Refresh financial summary when transactions change
+  useEffect(() => {
+    fetchFinancialSummary();
+  }, [transactions, fetchFinancialSummary]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -22,14 +28,7 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
     }).format(amount);
   };
 
-  // Calculate chicken stats from transactions (not included in API summary)
-  const chickensPurchased = transactions
-    .filter(transaction => transaction.type === 'expense' && transaction.category === 'chicken')
-    .reduce((total, transaction) => total + (transaction.quantity || 0), 0);
-  
-  const chickensSold = transactions
-    .filter(transaction => transaction.type === 'income' && transaction.category === 'chicken')
-    .reduce((total, transaction) => total + (transaction.quantity || 0), 0);
+  // We're no longer tracking chicken quantities as they were removed from the Transaction interface
 
   // Calculate financial values
 
