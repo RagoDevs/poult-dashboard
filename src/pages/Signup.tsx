@@ -119,11 +119,19 @@ export default function Signup() {
           </form>
         </CardContent>
         <CardFooter>
-          <div className="text-sm text-center w-full">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary hover:underline">
-              Log in
-            </Link>
+          <div className="text-sm text-center w-full space-y-2">
+            <div>
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary hover:underline">
+                Log in
+              </Link>
+            </div>
+            <div>
+              Didn't receive activation email?{' '}
+              <Link to="/resend-activation" className="text-primary hover:underline">
+                Resend activation link
+              </Link>
+            </div>
           </div>
         </CardFooter>
       </Card>

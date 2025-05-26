@@ -7,6 +7,7 @@ import Signup from '@/pages/Signup'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import ActivateAccount from '@/pages/ActivateAccount'
+import ResendActivation from '@/pages/ResendActivation'
 import Profile from '@/pages/Profile'
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -25,6 +26,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/activate-account" element={<ActivateAccount />} />
+      <Route path="/resend-activation" element={<ResendActivation />} />
       <Route path="/profile" element={
         <ProtectedRoute>
           <Profile />
