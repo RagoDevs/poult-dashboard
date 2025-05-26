@@ -30,7 +30,7 @@ export default function Profile() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Password validation
@@ -54,14 +54,77 @@ export default function Profile() {
       }
     }
     
-    // In a real app, you would call an API to update the profile
-    // For now, we'll just show a success message
-    toast({
-      title: "Success",
-      description: "Profile updated successfully"
-    });
-    
-    setIsEditing(false);
+    try {
+      // Prepare the request payload according to the expected structure
+      const payload: any = {};
+      
+      // Only include fields that have changed
+      if (formData.name !== user?.name) {
+        payload.name = formData.name;
+      }
+      
+      // Only include password fields if user is changing password
+      if (formData.newPassword) {
+        payload.current_password = formData.currentPassword;
+        payload.new_password = formData.newPassword;
+      }
+      
+      // Only proceed if there are changes to submit
+      if (Object.keys(payload).length === 0) {
+        toast({
+          title: "Info",
+          description: "No changes to update"
+        });
+        setIsEditing(false);
+        return;
+      }
+      
+      // Make the API call to update profile
+      const response = await fetch('http://localhost:5055/auth/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
+      }
+      
+      // Update local user data if name was changed
+      if (payload.name && user) {
+        const updatedUser = {
+          ...user,
+          name: payload.name
+        };
+        localStorage.setItem('kuku_user', JSON.stringify(updatedUser));
+      }
+      
+      toast({
+        title: "Success",
+        description: "Profile updated successfully"
+      });
+      
+      // Clear password fields
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }));
+      
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to update profile',
+        variant: "destructive"
+      });
+      console.error('Error updating profile:', error);
+    }
   };
 
   // Calculate initials for the avatar
