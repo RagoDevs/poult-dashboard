@@ -84,8 +84,8 @@ const Index = () => {
     try {
       // Determine which endpoint to call based on the active tab
       const baseUrl = currentTabType === 'expenses' 
-        ? 'http://localhost:5055/v1/auth/transactions/type/expense'
-        : 'http://localhost:5055/v1/auth/transactions/type/income';
+        ? 'http://localhost:5055/auth/transactions/type/expense'
+        : 'http://localhost:5055/auth/transactions/type/income';
       
       // Add category filter if not 'all'
       let url = baseUrl;
@@ -195,7 +195,7 @@ const Index = () => {
     };
     
     try {
-      const response = await fetch('http://localhost:5055/v1/auth/transactions', {
+      const response = await fetch('http://localhost:5055/auth/transactions', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

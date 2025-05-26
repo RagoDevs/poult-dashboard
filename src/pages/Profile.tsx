@@ -75,7 +75,7 @@ export default function Profile() {
       <header className="bg-white shadow-sm py-5 border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <span className="transform -scale-x-100 inline-block mr-3 text-3xl">🐔</span>
+            <img src="/chicken.png" alt="Kuku Farm Logo" className="h-8 w-8 mr-3" />
             Kuku Farm
           </h1>
           <Button 
@@ -238,7 +238,7 @@ export default function Profile() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-col items-center justify-center text-center">
             <div className="flex items-center mb-4">
-              <span className="transform -scale-x-100 inline-block mr-2 text-xl">🐔</span>
+              <img src="/chicken.png" alt="Kuku Farm Logo" className="h-6 w-6 mr-2" />
               <span className="font-semibold text-gray-900">Kuku Farm</span>
             </div>
             <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Kuku Farm. All rights reserved.</p>

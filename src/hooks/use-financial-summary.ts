@@ -13,7 +13,7 @@ export function useFinancialSummary() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const API_BASE_URL = 'http://localhost:5055/v1';
+  const API_BASE_URL = 'http://localhost:5055';
   
   const fetchFinancialSummary = useCallback(async () => {
     setLoading(true);

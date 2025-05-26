@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return error.message || 'An error occurred';
   };
 
-  const API_BASE_URL = 'http://localhost:5055/v1';
+  const API_BASE_URL = 'http://localhost:5055';
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
