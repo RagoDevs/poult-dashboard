@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'chicken_purchase' | 'chicken_sale' | 'salary' | 'other';
+export type ExpenseCategory = 'food' | 'medicine' | 'tools' | 'chicken' | 'chicken_purchase' | 'chicken_sale' | 'egg_sale' | 'salary' | 'other';
 export type TransactionType = 'expense' | 'income';
 
 export interface Expense {

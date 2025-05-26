@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/pages/Index";
-import { Apple, Pill, Wrench, Construction, Package, DollarSign, Bird, Baby } from "lucide-react";
+import { Apple, Pill, Wrench, Construction, Package, DollarSign, Bird, Baby, Egg } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionListProps {
@@ -37,6 +37,10 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
     // Use monochromatic icons (gray-600 for better visibility)
     if (category === 'chicken' || category === 'chicken_purchase' || category === 'chicken_sale') {
       return <Bird className="text-gray-600" />;
+    }
+    
+    if (category === 'egg_sale') {
+      return <Egg className="text-gray-600" />;
     }
     
     if (type === 'income') {
