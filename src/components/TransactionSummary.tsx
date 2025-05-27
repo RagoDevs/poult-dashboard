@@ -16,10 +16,6 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
   const isMobile = useIsMobile();
   const { summary, loading, error, fetchFinancialSummary } = useFinancialSummary();
   
-  // Refresh financial summary when transactions change
-  useEffect(() => {
-    fetchFinancialSummary();
-  }, [transactions, fetchFinancialSummary]);
 
   // Use centralized formatting utility
   const formatCurrencyWithMobile = (amount: number) => {
