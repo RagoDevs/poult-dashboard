@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Expense, ExpenseCategory } from "@/pages/Index";
 import { Apple, Pill, Wrench, Construction, Package } from "lucide-react";
+import { formatCurrency, formatDate } from "@/utils/format";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -20,27 +21,26 @@ export function ExpenseList({ expenses }: ExpenseListProps) {
         return <Pill className="text-blue-500" />;
       case 'tools':
         return <Wrench className="text-orange-500" />;
-      case 'fence':
-        return <Construction className="text-brown-500" />;
+      case 'chicken':
+      case 'chicken_purchase':
+      case 'chicken_sale':
+        return <Package className="text-gray-600" />;
+      case 'egg_sale':
+        return <Package className="text-yellow-500" />;
+      case 'salary':
+      case 'other':
       default:
         return <Package className="text-gray-500" />;
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
+  // Use centralized formatting utilities
+  const formatDateString = (dateStr: string) => {
+    return formatDate(dateStr);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  const formatAmountAsCurrency = (amount: number) => {
+    return formatCurrency(amount);
   };
 
   const filteredExpenses = expenses.filter(expense => 
@@ -80,9 +80,9 @@ export function ExpenseList({ expenses }: ExpenseListProps) {
                   {getCategoryIcon(expense.category)}
                   <span className="capitalize">{expense.category}</span>
                 </TableCell>
-                <TableCell>{formatDate(expense.date)}</TableCell>
+                <TableCell>{formatDateString(expense.date)}</TableCell>
                 <TableCell>{expense.description}</TableCell>
-                <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
+                <TableCell className="text-right">{formatAmountAsCurrency(expense.amount)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

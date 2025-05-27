@@ -6,6 +6,7 @@ import { Transaction } from "@/pages/Index";
 import { useFinancialSummary } from "@/hooks/use-financial-summary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/utils/format";
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
@@ -20,12 +21,9 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
     fetchFinancialSummary();
   }, [transactions, fetchFinancialSummary]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      notation: isMobile ? 'compact' : 'standard',
-    }).format(amount);
+  // Use centralized formatting utility
+  const formatCurrencyWithMobile = (amount: number) => {
+    return formatCurrency(amount, isMobile);
   };
 
   // We're no longer tracking chicken quantities as they were removed from the Transaction interface
@@ -51,7 +49,7 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
         ) : error ? (
           <div className="text-sm text-red-500">Error loading data</div>
         ) : summary ? (
-          <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.total_profit)}</div>
+          <div className="text-2xl font-bold text-gray-900">{formatCurrencyWithMobile(summary.total_profit)}</div>
         ) : (
           <div className="text-sm text-gray-500">No data available</div>
         )}
@@ -72,7 +70,7 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
         ) : error ? (
           <div className="text-sm text-red-500">Error loading data</div>
         ) : summary ? (
-          <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.total_income)}</div>
+          <div className="text-2xl font-bold text-gray-900">{formatCurrencyWithMobile(summary.total_income)}</div>
         ) : (
           <div className="text-sm text-gray-500">No data available</div>
         )}
@@ -93,7 +91,7 @@ export function TransactionSummary({ transactions }: TransactionSummaryProps) {
         ) : error ? (
           <div className="text-sm text-red-500">Error loading data</div>
         ) : summary ? (
-          <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.total_expenses)}</div>
+          <div className="text-2xl font-bold text-gray-900">{formatCurrencyWithMobile(summary.total_expenses)}</div>
         ) : (
           <div className="text-sm text-gray-500">No data available</div>
         )}

@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/pages/Index";
 import { Apple, Pill, Wrench, Construction, Package, DollarSign, Bird, Baby, Egg } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatCurrency, formatDate } from "@/utils/format";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -61,21 +62,13 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: isMobile ? 'numeric' : 'short',
-      day: 'numeric'
-    }).format(date);
+  // Use centralized formatting utilities
+  const formatDateWithMobile = (dateStr: string) => {
+    return formatDate(dateStr, isMobile);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      notation: isMobile ? 'compact' : 'standard'
-    }).format(amount);
+  const formatCurrencyWithMobile = (amount: number) => {
+    return formatCurrency(amount, isMobile);
   };
 
   // Removed getChickenTypeDisplay function as it's no longer needed
@@ -141,11 +134,11 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                       {formatCategoryName(transaction.category)}
                     </span>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-gray-600">{formatDate(transaction.date)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-gray-600">{formatDateWithMobile(transaction.date)}</TableCell>
                   <TableCell className="max-w-[150px] sm:max-w-[250px] truncate text-gray-600">
                     {transaction.description || '—'}
                   </TableCell>
-                  <TableCell className="text-right whitespace-nowrap font-medium text-gray-900">{formatCurrency(transaction.amount)}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap font-medium text-gray-900">{formatCurrencyWithMobile(transaction.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
