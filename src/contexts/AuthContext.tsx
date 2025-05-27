@@ -21,6 +21,7 @@ interface AuthContextType {
   resetPassword: (password: string, token: string) => Promise<boolean>;
   resendActivationToken: (email: string) => Promise<boolean>;
   activateAccount: (token: string) => Promise<boolean>;
+  fetchUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -242,6 +243,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Fetch the user profile from the server
+  const fetchUserProfile = async (): Promise<void> => {
+    if (!user?.token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/users/profile`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      
+      if (!response.ok) return;
+      
+      const profileData = await response.json();
+      
+      if (profileData && profileData.name) {
+        // Only update if the name is different to avoid unnecessary state updates
+        if (profileData.name !== user.name) {
+          const updatedUser = {
+            ...user,
+            name: profileData.name
+          };
+          
+          setUser(updatedUser);
+          localStorage.setItem('kuku_user', JSON.stringify(updatedUser));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -251,7 +282,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     requestPasswordReset,
     resetPassword,
     resendActivationToken,
-    activateAccount
+    activateAccount,
+    fetchUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

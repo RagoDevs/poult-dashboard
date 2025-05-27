@@ -48,7 +48,7 @@ const Index = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
-  const { user, logout } = useAuth();
+  const { user, logout, fetchUserProfile } = useAuth();
   const { toast } = useToast();
   
 
@@ -164,6 +164,17 @@ const Index = () => {
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryFilter, activeTab, user]);
+
+  // Check if profile was updated and fetch the latest user data
+  useEffect(() => {
+    const profileUpdated = sessionStorage.getItem('profile_updated');
+    if (profileUpdated === 'true' && user?.token) {
+      // Clear the flag first to prevent repeated fetches
+      sessionStorage.removeItem('profile_updated');
+      // Fetch the latest user profile data
+      fetchUserProfile();
+    }
+  }, [fetchUserProfile, user?.token]);
 
   // Removed duplicate useEffect that was causing multiple fetches when switching to the history tab
 

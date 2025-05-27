@@ -10,7 +10,7 @@ import { User, Mail, Key, Save, ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, fetchUserProfile } = useAuth();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -102,6 +102,9 @@ export default function Profile() {
           name: payload.name
         };
         localStorage.setItem('kuku_user', JSON.stringify(updatedUser));
+        
+        // This will be used when navigating back to dashboard
+        sessionStorage.setItem('profile_updated', 'true');
       }
       
       toast({
