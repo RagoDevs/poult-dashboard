@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { buildApiUrl } from '@/utils/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export default function Profile() {
       }
       
       // Make the API call to update profile
-      const response = await fetch('http://localhost:5055/auth/users/profile', {
+      const response = await fetch(buildApiUrl('auth/users/profile'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

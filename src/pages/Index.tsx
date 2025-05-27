@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { buildApiUrl } from '@/utils/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,8 +85,8 @@ const Index = () => {
     try {
       // Determine which endpoint to call based on the active tab
       const baseUrl = currentTabType === 'expenses' 
-        ? 'http://localhost:5055/auth/transactions/type/expense'
-        : 'http://localhost:5055/auth/transactions/type/income';
+        ? buildApiUrl('auth/transactions/type/expense')
+        : buildApiUrl('auth/transactions/type/income');
       
       // Add category filter if not 'all'
       let url = baseUrl;
@@ -195,7 +196,7 @@ const Index = () => {
     };
     
     try {
-      const response = await fetch('http://localhost:5055/auth/transactions', {
+      const response = await fetch(buildApiUrl('auth/transactions'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

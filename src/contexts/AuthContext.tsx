@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { API_URL } from '@/utils/config';
 
 interface User {
   id?: string;
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return error.message || 'An error occurred';
   };
 
-  const API_BASE_URL = 'http://localhost:5055';
+  const API_BASE_URL = API_URL;
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {

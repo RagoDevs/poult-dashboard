@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_URL } from '@/utils/config';
 
 interface FinancialSummary {
   total_income: number;
@@ -13,7 +14,7 @@ export function useFinancialSummary() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const API_BASE_URL = 'http://localhost:5055';
+  const API_BASE_URL = API_URL;
   
   const fetchFinancialSummary = useCallback(async () => {
     setLoading(true);
