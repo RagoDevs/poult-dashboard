@@ -8,6 +8,7 @@ import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionSummary } from "@/components/TransactionSummary";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFinancialSummary } from "@/hooks/use-financial-summary";
 import { useToast } from '@/components/ui/use-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -41,7 +42,9 @@ export interface Transaction {
 
 
 
+
 const Index = () => {
+  const { summary, loading: summaryLoading, error: summaryError, fetchFinancialSummary } = useFinancialSummary();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
@@ -228,6 +231,7 @@ const Index = () => {
       
       // Force refresh transactions after adding a new one
       loadTransactionsFromServer(categoryFilter, activeTab, true);
+      fetchFinancialSummary(); // Refresh the financial summary
       setShowTransactionForm(false);
       toast({ title: 'Success', description: 'Transaction added successfully and list updated.' });
     } catch (error: any) {
@@ -302,7 +306,12 @@ const Index = () => {
             </div>
           </div>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-            <TransactionSummary transactions={transactions} />
+            <TransactionSummary 
+  transactions={transactions}
+  summary={summary}
+  loading={summaryLoading}
+  error={summaryError}
+/>
           </div>
         </section>
         
@@ -391,6 +400,7 @@ const Index = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
+                  {/* TransactionSummary removed to prevent duplication */}
                   <TransactionList 
                     transactions={activeTab === 'expenses' ? expenses : income} 
                     type={activeTab}

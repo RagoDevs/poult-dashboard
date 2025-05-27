@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +26,16 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const isMobile = useIsMobile();
+
+  // Reset category when transaction type changes
+  useEffect(() => {
+    // Set appropriate default category based on transaction type
+    if (type === 'income') {
+      setCategory('chicken_sale');
+    } else {
+      setCategory('food');
+    }
+  }, [type]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

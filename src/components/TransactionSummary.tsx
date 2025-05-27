@@ -3,19 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, DollarSign, Package } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Transaction } from "@/pages/Index";
-import { useFinancialSummary } from "@/hooks/use-financial-summary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/utils/format";
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
+  summary: {
+    total_income: number;
+    total_expenses: number;
+    total_profit: number;
+  } | null;
+  loading: boolean;
+  error: string | null;
 }
 
-export function TransactionSummary({ transactions }: TransactionSummaryProps) {
+export function TransactionSummary({ transactions, summary, loading, error }: TransactionSummaryProps) {
   const isMobile = useIsMobile();
-  const { summary, loading, error, fetchFinancialSummary } = useFinancialSummary();
-  
 
   // Use centralized formatting utility
   const formatCurrencyWithMobile = (amount: number) => {
