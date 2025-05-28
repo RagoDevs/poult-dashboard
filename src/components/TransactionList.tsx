@@ -24,9 +24,10 @@ interface TransactionListProps {
   onCategoryChange?: (category: string) => void;
   onEdit?: (transaction: Transaction) => void;
   onDelete?: (transaction: Transaction) => void;
+  totalSum?: number;
 }
 
-export function TransactionList({ transactions, type, onCategoryChange, onEdit, onDelete }: TransactionListProps) {
+export function TransactionList({ transactions, type, onCategoryChange, onEdit, onDelete, totalSum = 0 }: TransactionListProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const isMobile = useIsMobile();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -94,6 +95,12 @@ export function TransactionList({ transactions, type, onCategoryChange, onEdit, 
   const filteredTransactions = categoryFilter === 'all' 
     ? transactions 
     : transactions.filter(transaction => transaction.category === categoryFilter);
+    
+  // Use the API-provided total sum when available and when showing all transactions
+  // Otherwise, calculate the sum for filtered categories
+  const filteredTotal = categoryFilter === 'all' && totalSum !== undefined
+    ? totalSum
+    : filteredTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -110,6 +117,20 @@ export function TransactionList({ transactions, type, onCategoryChange, onEdit, 
           ))}
         </TabsList>
       </Tabs>
+      
+      {/* Display total sum (either from API or calculated) */}
+      {filteredTransactions.length > 0 && (
+        <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border border-gray-200 rounded-md">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">
+              {categoryFilter === 'all' ? 'Total' : `${formatCategoryName(categoryFilter)} Total`}:
+            </span>
+          </div>
+          <span className="text-sm font-bold text-gray-900">
+            {formatCurrencyWithMobile(filteredTotal)}
+          </span>
+        </div>
+      )}
       
       {filteredTransactions.length === 0 ? (
         <div className="text-center py-8 border border-dashed border-gray-200 rounded-lg bg-gray-50">

@@ -49,6 +49,7 @@ const Index = () => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [totalSum, setTotalSum] = useState<number>(0);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
@@ -123,9 +124,15 @@ const Index = () => {
       };
 
       let fetchedTransactions: Transaction[] = [];
+      let currentTotalSum = 0;
       if (response.ok) {
         const data = await response.json();
         fetchedTransactions = processApiResponse(data);
+        // Store the total_sum from the API response
+        if (data.total_sum !== undefined) {
+          currentTotalSum = data.total_sum;
+          setTotalSum(data.total_sum);
+        }
       } else {
         const errorData = await response.json().catch(() => ({ 
           message: `Failed to fetch ${currentTabType} and could not parse error response` 
@@ -480,6 +487,7 @@ const Index = () => {
                     }}
                     onEdit={handleEditTransaction}
                     onDelete={deleteTransaction}
+                    totalSum={totalSum}
                   />
                 </div>
               </CardContent>
