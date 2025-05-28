@@ -320,6 +320,14 @@ const Index = () => {
   const handleEditTransaction = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setShowTransactionForm(true);
+    
+    // Scroll to the form if it's already visible, otherwise wait for it to render
+    setTimeout(() => {
+      const formElement = document.getElementById('transaction-form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const expenses = transactions.filter(transaction => transaction.type === 'expense');
@@ -439,7 +447,7 @@ const Index = () => {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-6 px-6">
+                <CardContent className="pt-6 px-6" id="transaction-form">
                   <TransactionForm 
                     onSubmit={addTransaction} 
                     onCancel={() => {
