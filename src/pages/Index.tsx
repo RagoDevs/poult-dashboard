@@ -166,13 +166,14 @@ const Index = () => {
     }
   }, [user, toast, setTransactions, categoryFilter, activeTab]);
 
-  // Fetch transactions when component mounts or user changes
+  // Fetch transactions and financial summary when component mounts or user changes
   useEffect(() => {
     if (user && user.token) {
       loadTransactionsFromServer();
-      fetchFinancialSummary();
+      fetchFinancialSummary(); // Now we need to call this explicitly since it's no longer automatic in the hook
     }
-  }, [user, loadTransactionsFromServer, fetchFinancialSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // Only depend on user to prevent circular dependencies
   
   // Handle tab change
   const handleTabChange = (value: string) => {

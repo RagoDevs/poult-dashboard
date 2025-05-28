@@ -44,11 +44,8 @@ export function useFinancialSummary() {
     }
   }, [user?.token, API_BASE_URL]);
 
-  useEffect(() => {
-    if (user?.token) {
-      fetchFinancialSummary();
-    }
-  }, [user?.token, fetchFinancialSummary]);
+  // We're not automatically fetching on mount anymore to prevent duplicate calls
+  // The parent component will call fetchFinancialSummary when needed
   
   return { 
     summary, 
