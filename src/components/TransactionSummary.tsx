@@ -21,17 +21,11 @@ interface TransactionSummaryProps {
 export function TransactionSummary({ transactions, summary, loading, error }: TransactionSummaryProps) {
   const isMobile = useIsMobile();
 
-  // Use centralized formatting utility
   const formatCurrencyWithMobile = (amount: number) => {
     return formatCurrency(amount, isMobile);
   };
 
-  // We're no longer tracking chicken quantities as they were removed from the Transaction interface
 
-  // Calculate financial values
-
-  // Instead of rendering a fragment with multiple cards, we need to render a single div
-  // This ensures the parent grid layout properly handles all three cards
   return [
     <Card key="profit" className="border border-gray-200 shadow-sm hover:shadow bg-white overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-5">
