@@ -3,19 +3,34 @@ import { useState } from 'react';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/pages/Index";
-import { Apple, Pill, Wrench, Construction, Package, DollarSign, Bird, Baby, Egg } from "lucide-react";
+import { Apple, Pill, Wrench, Construction, Package, DollarSign, Bird, Baby, Egg, Pencil, Trash2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatCurrency, formatDate } from "@/utils/format";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TransactionListProps {
   transactions: Transaction[];
   type: 'expenses' | 'income';
   onCategoryChange?: (category: string) => void;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (transaction: Transaction) => void;
 }
 
-export function TransactionList({ transactions, type, onCategoryChange }: TransactionListProps) {
+export function TransactionList({ transactions, type, onCategoryChange, onEdit, onDelete }: TransactionListProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const isMobile = useIsMobile();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   
   // Handle category change and notify parent component
   const handleCategoryChange = (category: string) => {
@@ -118,6 +133,9 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Date</TableHead>
                 <TableHead className="whitespace-nowrap font-medium text-gray-700">Description</TableHead>
                 <TableHead className="text-right whitespace-nowrap font-medium text-gray-700">Amount</TableHead>
+                {(onEdit || onDelete) && (
+                  <TableHead className="text-right whitespace-nowrap font-medium text-gray-700">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -139,12 +157,70 @@ export function TransactionList({ transactions, type, onCategoryChange }: Transa
                     {transaction.description || '—'}
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap font-medium text-gray-900">{formatCurrencyWithMobile(transaction.amount)}</TableCell>
+                  {(onEdit || onDelete) && (
+                    <TableCell className="text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        {onEdit && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => onEdit(transaction)} 
+                            className="h-8 w-8 p-0"
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4 text-gray-500" />
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => {
+                              setTransactionToDelete(transaction);
+                              setDeleteConfirmOpen(true);
+                            }} 
+                            className="h-8 w-8 p-0"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4 text-gray-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this {type === 'expenses' ? 'expense' : 'income'} record. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (transactionToDelete && onDelete) {
+                  onDelete(transactionToDelete);
+                  setTransactionToDelete(null);
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface TransactionFormProps {
   onSubmit: (transaction: {
+    id?: string;
     type: TransactionType;
     category: ExpenseCategory;
     amount: number;
@@ -18,24 +19,36 @@ interface TransactionFormProps {
   }) => void;
   onCancel: () => void;
   type: TransactionType;
+  transaction?: {
+    id: string;
+    type: TransactionType;
+    category: ExpenseCategory;
+    amount: number;
+    date: string;
+    description: string;
+  };
+  isEditing?: boolean;
 }
 
-export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormProps) {
-  const [category, setCategory] = useState<ExpenseCategory>('food');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [description, setDescription] = useState('');
+export function TransactionForm({ onSubmit, onCancel, type, transaction, isEditing = false }: TransactionFormProps) {
+  const [category, setCategory] = useState<ExpenseCategory>(transaction?.category || 'food');
+  const [amount, setAmount] = useState(transaction ? transaction.amount.toString() : '');
+  const [date, setDate] = useState(transaction ? transaction.date : new Date().toISOString().split('T')[0]);
+  const [description, setDescription] = useState(transaction ? transaction.description : '');
   const isMobile = useIsMobile();
 
-  // Reset category when transaction type changes
+  // Reset category when transaction type changes, but only if not editing
   useEffect(() => {
-    // Set appropriate default category based on transaction type
-    if (type === 'income') {
-      setCategory('chicken_sale');
-    } else {
-      setCategory('food');
+    // Only reset category if not in editing mode
+    if (!isEditing) {
+      // Set appropriate default category based on transaction type
+      if (type === 'income') {
+        setCategory('chicken_sale');
+      } else {
+        setCategory('food');
+      }
     }
-  }, [type]);
+  }, [type, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +70,7 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
     }
     
     onSubmit({
+      id: transaction?.id,
       type,
       category: finalCategory,
       amount: parseFloat(amount),
@@ -144,7 +158,7 @@ export function TransactionForm({ onSubmit, onCancel, type }: TransactionFormPro
         <Button variant="outline" type="button" onClick={onCancel} className="w-full sm:w-auto">
           Cancel
         </Button>
-        <Button type="submit" className="w-full sm:w-auto">Save {isIncome ? 'Income' : 'Expense'}</Button>
+        <Button type="submit" className="w-full sm:w-auto">{isEditing ? 'Update' : 'Save'} {isIncome ? 'Income' : 'Expense'}</Button>
       </div>
     </form>
   );

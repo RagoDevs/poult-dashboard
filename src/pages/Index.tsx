@@ -48,6 +48,7 @@ const Index = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'income'>('expenses');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
@@ -158,15 +159,27 @@ const Index = () => {
     }
   }, [user, toast, setTransactions, categoryFilter, activeTab]);
 
-  // Only load transactions when component mounts or when dependencies change
+  // Fetch transactions when component mounts or user changes
   useEffect(() => {
-    if (!user || !user.token) return;
-    
-    // The reference check in loadTransactionsFromServer will prevent duplicate requests
-    loadTransactionsFromServer(categoryFilter, activeTab);
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFilter, activeTab, user]);
+    if (user && user.token) {
+      loadTransactionsFromServer();
+      fetchFinancialSummary();
+    }
+  }, [user, loadTransactionsFromServer, fetchFinancialSummary]);
+  
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'expenses' | 'income');
+    // Reset category filter when changing tabs
+    setCategoryFilter('all');
+    // Close transaction form if open and reset editing state
+    if (showTransactionForm || editingTransaction) {
+      setShowTransactionForm(false);
+      setEditingTransaction(null);
+    }
+    // Load transactions for the new tab
+    loadTransactionsFromServer('all', value as 'expenses' | 'income');
+  };
 
   // Check if profile was updated and fetch the latest user data
   useEffect(() => {
@@ -181,7 +194,9 @@ const Index = () => {
 
   // Removed duplicate useEffect that was causing multiple fetches when switching to the history tab
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id'> & { id?: string }) => {
+    // If transaction has an ID, we're updating an existing transaction
+    const isEditing = !!transaction.id;
     
     if (!user || !user.token) {
       toast({ 
@@ -210,8 +225,15 @@ const Index = () => {
     };
     
     try {
-      const response = await fetch(buildApiUrl('auth/transactions'), {
-        method: 'POST',
+      // Determine if we're creating or updating a transaction
+      const url = isEditing 
+        ? buildApiUrl(`auth/transactions/${transaction.id}`)
+        : buildApiUrl('auth/transactions');
+      
+      const method = isEditing ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
@@ -229,11 +251,15 @@ const Index = () => {
         id: crypto.randomUUID(),
       };
       
-      // Force refresh transactions after adding a new one
+      // Force refresh transactions after adding/updating
       loadTransactionsFromServer(categoryFilter, activeTab, true);
       fetchFinancialSummary(); // Refresh the financial summary
       setShowTransactionForm(false);
-      toast({ title: 'Success', description: 'Transaction added successfully and list updated.' });
+      setEditingTransaction(null); // Clear editing state
+      toast({ 
+        title: 'Success', 
+        description: `Transaction ${isEditing ? 'updated' : 'added'} successfully and list updated.` 
+      });
     } catch (error: any) {
       toast({ 
         title: 'Error', 
@@ -242,6 +268,50 @@ const Index = () => {
       });
       console.error('Error adding transaction:', error);
     }
+  };
+
+  // Delete a transaction
+  const deleteTransaction = async (transaction: Transaction) => {
+    if (!user || !user.token) {
+      toast({ 
+        title: 'Authentication Error', 
+        description: 'You must be logged in to delete transactions', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(buildApiUrl(`auth/transactions/${transaction.id}`), {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete transaction');
+      }
+
+      // Force refresh transactions after deleting
+      loadTransactionsFromServer(categoryFilter, activeTab, true);
+      fetchFinancialSummary(); // Refresh the financial summary
+      toast({ title: 'Success', description: 'Transaction deleted successfully.' });
+    } catch (error: any) {
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to delete transaction', 
+        variant: 'destructive' 
+      });
+      console.error('Error deleting transaction:', error);
+    }
+  };
+
+  // Handle edit transaction
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setShowTransactionForm(true);
   };
 
   const expenses = transactions.filter(transaction => transaction.type === 'expense');
@@ -322,10 +392,7 @@ const Index = () => {
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg shadow-sm">
                   <Button 
                     variant={activeTab === 'expenses' ? 'default' : 'ghost'} 
-                    onClick={() => {
-                      setCategoryFilter('all');
-                      setActiveTab('expenses');
-                    }}
+                    onClick={() => handleTabChange('expenses')}
                     size="sm"
                     className="rounded-md font-medium"
                   >
@@ -333,10 +400,7 @@ const Index = () => {
                   </Button>
                   <Button 
                     variant={activeTab === 'income' ? 'default' : 'ghost'} 
-                    onClick={() => {
-                      setCategoryFilter('all');
-                      setActiveTab('income');
-                    }}
+                    onClick={() => handleTabChange('income')}
                     size="sm"
                     className="rounded-md font-medium"
                   >
@@ -370,8 +434,13 @@ const Index = () => {
                 <CardContent className="pt-6 px-6">
                   <TransactionForm 
                     onSubmit={addTransaction} 
-                    onCancel={() => setShowTransactionForm(false)} 
+                    onCancel={() => {
+                      setShowTransactionForm(false);
+                      setEditingTransaction(null);
+                    }} 
                     type={activeTab === 'expenses' ? 'expense' : 'income'}
+                    transaction={editingTransaction || undefined}
+                    isEditing={!!editingTransaction}
                   />
                 </CardContent>
               </Card>
@@ -400,7 +469,7 @@ const Index = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  {/* TransactionSummary removed to prevent duplication */}
+                  {/* TransactionList component */}
                   <TransactionList 
                     transactions={activeTab === 'expenses' ? expenses : income} 
                     type={activeTab}
@@ -409,6 +478,8 @@ const Index = () => {
                       setCategoryFilter(category);
                       loadTransactionsFromServer(category, activeTab);
                     }}
+                    onEdit={handleEditTransaction}
+                    onDelete={deleteTransaction}
                   />
                 </div>
               </CardContent>
