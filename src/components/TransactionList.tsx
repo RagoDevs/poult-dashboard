@@ -87,8 +87,6 @@ export function TransactionList({ transactions, type, onCategoryChange, onEdit, 
     return formatCurrency(amount, isMobile);
   };
 
-  // Removed getChickenTypeDisplay function as it's no longer needed
-
   // Get unique categories from transactions
   const categories = ['all', ...new Set(transactions.map(t => t.category))];
   
@@ -96,11 +94,9 @@ export function TransactionList({ transactions, type, onCategoryChange, onEdit, 
     ? transactions 
     : transactions.filter(transaction => transaction.category === categoryFilter);
     
-  // Use the API-provided total sum when available and when showing all transactions
-  // Otherwise, calculate the sum for filtered categories
-  const filteredTotal = categoryFilter === 'all' && totalSum !== undefined
-    ? totalSum
-    : filteredTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  // Always use the API-provided total sum from the parent component
+  // Never calculate locally
+  const filteredTotal = totalSum;
 
   return (
     <div className="space-y-6">
